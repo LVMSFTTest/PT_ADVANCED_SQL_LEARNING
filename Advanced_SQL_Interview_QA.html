@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced SQL — Interview Q&A</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--sf:#161b22;--sf2:#1c2330;--bd:#21262d;--bd2:#30363d;
+  --tx:#e6edf3;--mu:#8b949e;--dm:#484f58;
+  --or:#f0883e;--bl:#58a6ff;--gn:#3fb950;--rd:#f85149;
+  --pu:#bc8cff;--tl:#39d3c3;--go:#e3b341;--pk:#f778ba;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.6;}
+
+/* HEADER */
+.hdr{background:var(--sf);border-bottom:1px solid var(--bd);padding:24px 22px 18px;text-align:center;position:sticky;top:0;z-index:100;}
+.hdr h1{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:800;color:var(--tx);margin-bottom:4px;}
+.hdr p{font-size:12px;color:var(--mu);margin-bottom:13px;}
+.pills{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;}
+.pill{padding:5px 13px;border-radius:20px;font-size:11.5px;font-weight:600;border:1px solid;cursor:pointer;background:transparent;transition:all .15s;}
+.pill:hover{opacity:.85;}
+.pill.all{border-color:var(--bd2);color:var(--mu);}
+.pill.all.on{background:var(--sf2);color:var(--tx);border-color:var(--bd2);}
+.pill.sort{border-color:rgba(88,166,255,.3);color:var(--bl);}           .pill.sort.on{background:rgba(88,166,255,.1);}
+.pill.filter{border-color:rgba(240,136,62,.3);color:var(--or);}         .pill.filter.on{background:rgba(240,136,62,.1);}
+.pill.groupby{border-color:rgba(57,211,195,.3);color:var(--tl);}        .pill.groupby.on{background:rgba(57,211,195,.1);}
+.pill.joins{border-color:rgba(188,140,255,.3);color:var(--pu);}         .pill.joins.on{background:rgba(188,140,255,.1);}
+.pill.subquery{border-color:rgba(63,185,80,.3);color:var(--gn);}        .pill.subquery.on{background:rgba(63,185,80,.1);}
+.pill.window{border-color:rgba(227,179,65,.3);color:var(--go);}         .pill.window.on{background:rgba(227,179,65,.1);}
+.pill.etl{border-color:rgba(247,120,186,.3);color:var(--pk);}           .pill.etl.on{background:rgba(247,120,186,.1);}
+
+/* STATS */
+.sbar{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;padding:9px 22px;background:var(--bg);border-bottom:1px solid var(--bd);}
+.si .sv{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--tx);text-align:center;}
+.si .sl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.7px;text-align:center;margin-top:1px;}
+
+/* MAIN */
+main{max-width:960px;margin:0 auto;padding:26px 20px 80px;}
+.section{margin-bottom:40px;}
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:13px;padding-bottom:9px;border-bottom:1px solid var(--bd);}
+.sec-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.sec-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;}
+.sec-count{margin-left:auto;font-size:11px;color:var(--mu);font-family:'JetBrains Mono',monospace;}
+.sec-ctrls{display:flex;gap:7px;margin-bottom:10px;}
+.sc-btn{font-size:11px;color:var(--mu);background:none;border:1px solid var(--bd);border-radius:6px;padding:3px 10px;cursor:pointer;transition:all .15s;}
+.sc-btn:hover{border-color:var(--bd2);color:var(--tx);}
+
+/* QA CARD */
+.qa{background:var(--sf);border:1px solid var(--bd);border-radius:11px;margin-bottom:9px;overflow:hidden;transition:border-color .2s;}
+.qa:hover{border-color:var(--bd2);}
+.qa.open{border-color:var(--bd2);}
+.qa-q{display:flex;align-items:flex-start;gap:11px;padding:13px 15px;cursor:pointer;user-select:none;}
+.qn{flex-shrink:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;margin-top:1px;}
+.qt{flex:1;font-size:14px;font-weight:500;color:var(--tx);line-height:1.5;}
+.qch{flex-shrink:0;font-size:15px;color:var(--dm);transition:transform .25s;margin-top:2px;}
+.qa.open .qch{transform:rotate(180deg);color:var(--mu);}
+.qa-a{display:none;border-top:1px solid var(--bd);padding:15px 15px 17px 48px;}
+.qa.open .qa-a{display:block;}
+.al{font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;margin-bottom:7px;opacity:.7;}
+.ab{font-size:13.5px;line-height:1.75;color:var(--tx);}
+.ab strong{font-weight:600;}
+.code{background:#010409;border:1px solid var(--bd);border-radius:8px;padding:11px 13px;margin-top:11px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.75;overflow-x:auto;white-space:pre;}
+.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#6e7681;font-style:italic;}.num{color:#f2cc60;}.op{color:#79c0ff;}.tbl{color:#7ee787;}.col{color:#ffa657;}
+.tip{margin-top:11px;border-radius:7px;padding:9px 12px;font-size:12.5px;line-height:1.65;}
+.tip.w{background:rgba(248,81,73,.08);border-left:3px solid var(--rd);color:#fca5a5;}
+.tip.i{background:rgba(88,166,255,.08);border-left:3px solid var(--bl);color:#93c5fd;}
+.tip.g{background:rgba(63,185,80,.08);border-left:3px solid var(--gn);color:#6ee7b7;}
+.tip.o{background:rgba(227,179,65,.08);border-left:3px solid var(--go);color:#fcd34d;}
+
+/* PROGRESS */
+.pbar{position:fixed;bottom:20px;right:18px;background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:7px 13px;font-size:12px;color:var(--mu);z-index:200;}
+.pbar .pv{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--tx);}
+
+.section[hidden]{display:none;}
+@media(max-width:600px){.hdr{padding:16px 14px 13px;}.hdr h1{font-size:17px;}main{padding:18px 13px 70px;}.qa-a{padding-left:15px;}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <h1>🚀 Advanced SQL — Interview Q&amp;A</h1>
+  <p>55 questions across 7 topics. Click any question to reveal the answer.</p>
+  <div class="pills" id="pills">
+    <button class="pill all on"     data-cat="all">All Topics</button>
+    <button class="pill sort"       data-cat="sort">ORDER BY</button>
+    <button class="pill filter"     data-cat="filter">Filtering</button>
+    <button class="pill groupby"    data-cat="groupby">GROUP BY</button>
+    <button class="pill joins"      data-cat="joins">JOINs</button>
+    <button class="pill subquery"   data-cat="subquery">Subqueries</button>
+    <button class="pill window"     data-cat="window">Window Fns</button>
+    <button class="pill etl"        data-cat="etl">ETL &amp; Stats</button>
+  </div>
+</header>
+
+<div class="sbar">
+  <div class="si"><div class="sv">55</div><div class="sl">Questions</div></div>
+  <div class="si"><div class="sv">7</div><div class="sl">Topics</div></div>
+  <div class="si"><div class="sv" id="oc">0 / 55</div><div class="sl">Revealed</div></div>
+</div>
+
+<main>
+
+<!-- ═══ SECTION 1: ORDER BY ═══ -->
+<section class="section" data-sec="sort">
+  <div class="sec-hdr"><div class="sec-dot" style="background:var(--bl);"></div><div class="sec-title" style="color:var(--bl);">ORDER BY — Advanced Sorting</div><div class="sec-count">8 questions</div></div>
+  <div class="sec-ctrls"><button class="sc-btn" onclick="exSec('sort')">Expand all</button><button class="sc-btn" onclick="colSec('sort')">Collapse all</button></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">1</div><div class="qt">What does ORDER BY do and what is the default sort order?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab">ORDER BY sorts the result set of a query. The default is <strong>ASC (ascending)</strong> — smallest to largest, A to Z, oldest to newest. You must explicitly write DESC for descending order. Without ORDER BY, the database can return rows in any order — never assume a default order.</div><div class="code"><span class="kw">SELECT</span> FirstName, LastName <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">ORDER BY</span> LastName <span class="kw">ASC</span>;
+<span class="kw">SELECT</span> FirstName, Salary   <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">ORDER BY</span> Salary <span class="kw">DESC</span>;</div></div></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">2</div><div class="qt">How do you sort by multiple columns?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab">List the columns separated by commas. Sorting is applied left to right — the first column is the primary sort key, and the second column is used only when two rows have the same value in the first column.</div><div class="code"><span class="cm">-- Sort by city A-Z, then by salary highest-first within each city</span>
+<span class="kw">SELECT</span> FirstName, City, Salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> City <span class="kw">ASC</span>, Salary <span class="kw">DESC</span>;</div></div></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">3</div><div class="qt">Can you use a column alias in ORDER BY? Can you use it in WHERE?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab"><strong>Yes to ORDER BY, No to WHERE.</strong> ORDER BY runs after SELECT, so aliases are already defined by the time ORDER BY executes. WHERE runs before SELECT, so the alias doesn't exist yet.</div><div class="code"><span class="kw">SELECT</span> FirstName, Salary * <span class="num">12</span> <span class="kw">AS</span> annual
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> annual <span class="kw">DESC</span>;   <span class="cm">-- ✅ works</span>
+<span class="cm">-- WHERE annual > 800000  ← ❌ fails — alias not known yet</span></div></div></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">4</div><div class="qt">How do you sort by a function or expression?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab">You can put any valid SQL expression directly in the ORDER BY clause — including function calls like LENGTH(), ABS(), or arithmetic.</div><div class="code"><span class="cm">-- Sort customers by name length (shortest first)</span>
+<span class="kw">SELECT</span> FirstName <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span> <span class="fn">LENGTH</span>(FirstName) <span class="kw">ASC</span>;
+
+<span class="cm">-- Sort by absolute distance from age 30</span>
+<span class="kw">SELECT</span> FirstName, Age <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span> <span class="fn">ABS</span>(Age - <span class="num">30</span>) <span class="kw">ASC</span>;</div></div></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">5</div><div class="qt">How do you create a custom sort order using CASE WHEN in ORDER BY?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab">Place a CASE WHEN expression directly inside ORDER BY. Assign numeric priorities — lower numbers sort first. This lets you control exactly which values appear at the top.</div><div class="code"><span class="cm">-- New York customers appear first, then everyone else by city</span>
+<span class="kw">SELECT</span> FirstName, City <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span>
+    <span class="kw">CASE</span> <span class="kw">WHEN</span> City = <span class="str">'New York'</span> <span class="kw">THEN</span> <span class="num">0</span> <span class="kw">ELSE</span> <span class="num">1</span> <span class="kw">END</span>,
+    City <span class="kw">ASC</span>;</div></div></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">6</div><div class="qt">What is LIMIT and what does OFFSET do?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab"><strong>LIMIT n</strong> returns only the first n rows. <strong>OFFSET n</strong> skips the first n rows before returning results. Together they implement pagination — skip page 1, return page 2.</div><div class="code"><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">ORDER BY</span> Age <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="num">5</span>;          <span class="cm">-- rows 1-5</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">ORDER BY</span> Age <span class="kw">DESC</span> <span class="kw">LIMIT</span> <span class="num">3</span> <span class="kw">OFFSET</span> <span class="num">5</span>; <span class="cm">-- rows 6-8</span></div></div></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">7</div><div class="qt">How do you find the 2nd highest salary using ORDER BY?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab">Use ORDER BY DESC to rank highest first, DISTINCT to avoid ties fooling the rank, LIMIT 1 to take one row, and OFFSET 1 to skip the top one.</div><div class="code"><span class="kw">SELECT DISTINCT</span> Salary <span class="kw">AS</span> second_highest
+<span class="kw">FROM</span>   <span class="tbl">salary</span>
+<span class="kw">ORDER BY</span> Salary <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  <span class="num">1</span> <span class="kw">OFFSET</span> <span class="num">1</span>;</div></div></div>
+
+  <div class="qa" data-sec="sort"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(88,166,255,.12);color:var(--bl);">8</div><div class="qt">Why should you always use ORDER BY with LIMIT?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--bl);">Answer</div><div class="ab">Without ORDER BY, the database can return rows in any order — which changes between runs. LIMIT without ORDER BY gives you unpredictable, non-deterministic results. Always pair them.</div><div class="tip w">⚠️ SELECT * FROM customer_info LIMIT 5 — this can return different rows each time. Always add ORDER BY to get consistent results.</div></div></div>
+</section>
+
+<!-- ═══ SECTION 2: FILTERING ═══ -->
+<section class="section" data-sec="filter">
+  <div class="sec-hdr"><div class="sec-dot" style="background:var(--or);"></div><div class="sec-title" style="color:var(--or);">Advanced Filtering — IN, AND, OR, NOT</div><div class="sec-count">8 questions</div></div>
+  <div class="sec-ctrls"><button class="sc-btn" onclick="exSec('filter')">Expand all</button><button class="sc-btn" onclick="colSec('filter')">Collapse all</button></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">1</div><div class="qt">What does the IN operator do and why is it better than multiple OR conditions?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab">IN checks whether a column value matches any value in a provided list. It is functionally identical to chaining OR conditions but is far more readable and maintainable — especially with large lists.</div><div class="code"><span class="cm">-- Verbose with OR</span>
+<span class="kw">WHERE</span> City = <span class="str">'Chicago'</span> <span class="kw">OR</span> City = <span class="str">'Houston'</span> <span class="kw">OR</span> City = <span class="str">'Seattle'</span>
+
+<span class="cm">-- Clean with IN</span>
+<span class="kw">WHERE</span> City <span class="kw">IN</span> (<span class="str">'Chicago'</span>, <span class="str">'Houston'</span>, <span class="str">'Seattle'</span>)</div></div></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">2</div><div class="qt">What is the difference between AND and OR operators?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab"><strong>AND</strong> requires both conditions to be true — it narrows results (fewer rows). <strong>OR</strong> requires at least one condition to be true — it broadens results (more rows).</div><div class="code"><span class="cm">-- AND: only customers in NY AND older than 30</span>
+<span class="kw">WHERE</span> City = <span class="str">'New York'</span> <span class="kw">AND</span> Age > <span class="num">30</span>
+
+<span class="cm">-- OR: customers in NY OR Miami (either city counts)</span>
+<span class="kw">WHERE</span> City = <span class="str">'New York'</span> <span class="kw">OR</span> City = <span class="str">'Miami'</span></div></div></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">3</div><div class="qt">What is operator precedence between AND and OR? How do you control it?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab">AND has higher precedence than OR — it is evaluated first, just like × before + in arithmetic. Use parentheses to control the order explicitly and avoid bugs.</div><div class="code"><span class="cm">-- Without parentheses: AND runs first, then OR</span>
+<span class="kw">WHERE</span> City = <span class="str">'Miami'</span> <span class="kw">AND</span> Age > <span class="num">30</span> <span class="kw">OR</span> City = <span class="str">'Chicago'</span>
+<span class="cm">-- Reads as: (Miami AND age>30) OR Chicago</span>
+
+<span class="cm">-- With parentheses: explicit and clear</span>
+<span class="kw">WHERE</span> (City = <span class="str">'Miami'</span> <span class="kw">AND</span> Age > <span class="num">30</span>)
+   <span class="kw">OR</span> (City = <span class="str">'Chicago'</span> <span class="kw">AND</span> Age < <span class="num">28</span>)</div></div></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">4</div><div class="qt">How does NOT work and when would you use NOT IN?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab">NOT negates a condition — it returns rows where the condition is false. NOT IN excludes a list of values.</div><div class="code"><span class="cm">-- Exclude Los Angeles customers</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> <span class="kw">NOT</span> City = <span class="str">'Los Angeles'</span>;   <span class="cm">-- or: WHERE City != 'Los Angeles'</span>
+
+<span class="cm">-- NOT IN excludes multiple values</span>
+<span class="kw">WHERE</span> City <span class="kw">NOT IN</span> (<span class="str">'Los Angeles'</span>, <span class="str">'Seattle'</span>)</div><div class="tip w">⚠️ NOT IN with NULLs returns 0 rows — if the list contains NULL, SQL cannot confirm "not equal to NULL". Use IS NOT NULL separately.</div></div></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">5</div><div class="qt">What is BETWEEN and is it inclusive?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab">BETWEEN filters values within a range and is <strong>fully inclusive</strong> on both ends — the start and end values are included in the results.</div><div class="code"><span class="cm">-- Both 25 and 35 are included</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> Age <span class="kw">BETWEEN</span> <span class="num">25</span> <span class="kw">AND</span> <span class="num">35</span>;
+<span class="cm">-- Equivalent: WHERE Age >= 25 AND Age <= 35</span></div></div></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">6</div><div class="qt">How do you find rows where a column contains a specific substring?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab">Use LIKE with % wildcards on both sides. The % matches any sequence of characters, so '%a%' finds any value containing 'a' anywhere in the string.</div><div class="code"><span class="cm">-- First names containing the letter 'a'</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> FirstName <span class="kw">LIKE</span> <span class="str">'%a%'</span>;
+
+<span class="cm">-- Last names starting with 'D'</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> LastName <span class="kw">LIKE</span> <span class="str">'D%'</span>;</div></div></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">7</div><div class="qt">How do you filter rows where a column is NULL or NOT NULL?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab">Use IS NULL or IS NOT NULL. You cannot use = NULL — that always returns no rows because NULL is not equal to anything, not even itself.</div><div class="code"><span class="cm">-- Wrong — always returns 0 rows</span>
+<span class="kw">WHERE</span> Salary = <span class="kw">NULL</span>
+
+<span class="cm">-- Correct</span>
+<span class="kw">WHERE</span> Salary <span class="kw">IS NULL</span>
+<span class="kw">WHERE</span> Salary <span class="kw">IS NOT NULL</span></div></div></div>
+
+  <div class="qa" data-sec="filter"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(240,136,62,.12);color:var(--or);">8</div><div class="qt">How do you combine LIKE with AND to find names of a specific length?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--or);">Answer</div><div class="ab">Combine LIKE with LENGTH() in a WHERE clause. LIKE handles the pattern (e.g. starts with a character) and LENGTH() enforces the exact character count.</div><div class="code"><span class="cm">-- First name starts with 'J' AND is exactly 4 characters</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> FirstName <span class="kw">LIKE</span> <span class="str">'J___'</span>      <span class="cm">-- J + 3 wildcards = 4 chars</span>
+  <span class="kw">AND</span> <span class="fn">LENGTH</span>(FirstName) = <span class="num">4</span>;   <span class="cm">-- redundant here but clear</span></div></div></div>
+</section>
+
+<!-- ═══ SECTION 3: GROUP BY ═══ -->
+<section class="section" data-sec="groupby">
+  <div class="sec-hdr"><div class="sec-dot" style="background:var(--tl);"></div><div class="sec-title" style="color:var(--tl);">GROUP BY, HAVING & Math Operations</div><div class="sec-count">8 questions</div></div>
+  <div class="sec-ctrls"><button class="sc-btn" onclick="exSec('groupby')">Expand all</button><button class="sc-btn" onclick="colSec('groupby')">Collapse all</button></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">1</div><div class="qt">What does GROUP BY do and what rules must you follow when using it?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="ab">GROUP BY divides rows into groups based on shared column values and applies aggregate functions per group. Rule: every column in SELECT that is NOT inside an aggregate function MUST appear in GROUP BY.</div><div class="code"><span class="cm">-- ✅ Correct: City is in both SELECT and GROUP BY</span>
+<span class="kw">SELECT</span>   City, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> count
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span>
+<span class="kw">GROUP BY</span> City;
+
+<span class="cm">-- ❌ Wrong: FirstName not in GROUP BY or aggregate</span>
+<span class="cm">-- SELECT FirstName, City, COUNT(*) FROM customer_info GROUP BY City;</span></div></div></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">2</div><div class="qt">What is the difference between WHERE and HAVING?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="ab">WHERE filters individual rows before grouping and cannot use aggregate functions. HAVING filters groups after GROUP BY and can use aggregate functions like COUNT, AVG, SUM.</div><div class="code"><span class="cm">-- Customers in cities with more than 2 people, earning > 50k</span>
+<span class="kw">SELECT</span>   City, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt, <span class="kw">AVG</span>(Salary) <span class="kw">AS</span> avg_sal
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    s.Salary > <span class="num">50000</span>       <span class="cm">-- row filter (before grouping)</span>
+<span class="kw">GROUP BY</span> City
+<span class="kw">HAVING</span>   <span class="kw">COUNT</span>(*) > <span class="num">2</span>;         <span class="cm">-- group filter (after grouping)</span></div></div></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">3</div><div class="qt">How do you group by multiple columns?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="ab">List multiple columns in GROUP BY — one group is created for each unique combination of values across all listed columns.</div><div class="code"><span class="cm">-- One row per unique (City, Age) combination</span>
+<span class="kw">SELECT</span>   City, Age, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> count
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span>
+<span class="kw">GROUP BY</span> City, Age
+<span class="kw">ORDER BY</span> City, Age;</div></div></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">4</div><div class="qt">How do you calculate a running total in SQL?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="ab">Use SUM() as a window function with OVER() and ORDER BY. This adds a cumulative total to each row rather than collapsing all rows into one.</div><div class="code"><span class="kw">SELECT</span> FirstName, Salary,
+       <span class="kw">SUM</span>(Salary) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> Salary) <span class="kw">AS</span> running_total
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</div></div></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">5</div><div class="qt">How do you use CASE WHEN inside an aggregate function?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="ab">Wrap a CASE WHEN inside an aggregate function to conditionally count or sum only rows that match a condition — a technique called conditional aggregation.</div><div class="code"><span class="cm">-- Count high and low earners per city in one query</span>
+<span class="kw">SELECT</span>   City,
+         <span class="kw">COUNT</span>(<span class="kw">CASE WHEN</span> s.Salary >= <span class="num">70000</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>) <span class="kw">AS</span> high_earners,
+         <span class="kw">COUNT</span>(<span class="kw">CASE WHEN</span> s.Salary <  <span class="num">70000</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">END</span>) <span class="kw">AS</span> low_earners
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> City;</div></div></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">6</div><div class="qt">What arithmetic operators does SQL support?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="ab">SQL supports + (add), - (subtract), * (multiply), / (divide), % or MOD (remainder). These can be used in SELECT, WHERE, HAVING, and ORDER BY clauses.</div><div class="code"><span class="kw">SELECT</span> FirstName,
+       Salary,
+       Salary * <span class="num">12</span>          <span class="kw">AS</span> annual,
+       Salary * <span class="num">12</span> * <span class="num">0.20</span>   <span class="kw">AS</span> tax,
+       Salary <span class="kw">MOD</span> <span class="num">1000</span>       <span class="kw">AS</span> remainder
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</div></div></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">7</div><div class="qt">How do you find the total salary paid per city, only for cities over $100,000?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="code"><span class="kw">SELECT</span>   c.City,
+         <span class="kw">SUM</span>(s.Salary) <span class="kw">AS</span> total_salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.City
+<span class="kw">HAVING</span>   <span class="kw">SUM</span>(s.Salary) > <span class="num">100000</span>
+<span class="kw">ORDER BY</span> total_salary <span class="kw">DESC</span>;</div></div></div>
+
+  <div class="qa" data-sec="groupby"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(57,211,195,.12);color:var(--tl);">8</div><div class="qt">How do you find duplicate records in a table?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--tl);">Answer</div><div class="ab">GROUP BY the columns that define uniqueness, then use HAVING COUNT(*) > 1 to find groups with more than one row — those are duplicates.</div><div class="code"><span class="kw">SELECT</span>   FirstName, LastName, City,
+         <span class="kw">COUNT</span>(*) <span class="kw">AS</span> cnt
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span>
+<span class="kw">GROUP BY</span> FirstName, LastName, City
+<span class="kw">HAVING</span>   <span class="kw">COUNT</span>(*) > <span class="num">1</span>;</div></div></div>
+</section>
+
+<!-- ═══ SECTION 4: JOINS ═══ -->
+<section class="section" data-sec="joins">
+  <div class="sec-hdr"><div class="sec-dot" style="background:var(--pu);"></div><div class="sec-title" style="color:var(--pu);">JOINs — All 4 Types</div><div class="sec-count">8 questions</div></div>
+  <div class="sec-ctrls"><button class="sc-btn" onclick="exSec('joins')">Expand all</button><button class="sc-btn" onclick="colSec('joins')">Collapse all</button></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">1</div><div class="qt">What is the difference between INNER JOIN, LEFT JOIN, RIGHT JOIN, and FULL OUTER JOIN?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab"><strong>INNER JOIN</strong>: only rows matching in both tables. <strong>LEFT JOIN</strong>: all rows from the left table, NULLs for unmatched right. <strong>RIGHT JOIN</strong>: all rows from the right table, NULLs for unmatched left. <strong>FULL OUTER JOIN</strong>: all rows from both, NULLs wherever there's no match.</div><div class="code"><span class="kw">SELECT</span> c.FirstName, s.Salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">INNER JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId; <span class="cm">-- 15 rows (all match)</span>
+
+<span class="kw">LEFT JOIN</span>  <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId; <span class="cm">-- all customers, NULL if no salary</span></div></div></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">2</div><div class="qt">How do you find records that exist in one table but NOT in another?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab">Use a LEFT JOIN and then filter WHERE the right table's key IS NULL. This returns all rows from the left that have no match in the right table.</div><div class="code"><span class="cm">-- Customers who have NO salary record</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">LEFT JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    s.SalaryId <span class="kw">IS NULL</span>;</div></div></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">3</div><div class="qt">Does MySQL support FULL OUTER JOIN? How do you simulate it?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab">MySQL does NOT support FULL OUTER JOIN syntax. Simulate it using UNION of a LEFT JOIN and a RIGHT JOIN — UNION automatically removes duplicates.</div><div class="code"><span class="kw">SELECT</span> c.FirstName, s.Salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">LEFT JOIN</span>  <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">UNION</span>
+<span class="kw">SELECT</span> c.FirstName, s.Salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">RIGHT JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</div></div></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">4</div><div class="qt">What is a self join and when would you use it?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab">A self join joins a table to itself using aliases. Use it when rows in the same table are related to each other — e.g. employees and their managers stored in the same table.</div><div class="code"><span class="cm">-- Find customers older than another customer in the same city</span>
+<span class="kw">SELECT</span> a.FirstName, a.Age, b.FirstName <span class="kw">AS</span> younger_in_city
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> a
+<span class="kw">JOIN</span>   <span class="tbl">customer_info</span> b
+    <span class="kw">ON</span> a.City = b.City <span class="kw">AND</span> a.Age > b.Age;</div></div></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">5</div><div class="qt">What is the difference between UNION and UNION ALL?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab"><strong>UNION</strong> removes duplicate rows from the combined result. <strong>UNION ALL</strong> keeps all rows including duplicates. UNION ALL is faster because it skips the deduplication step.</div><div class="code"><span class="kw">SELECT</span> City <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> Age > <span class="num">35</span>
+<span class="kw">UNION</span>                         <span class="cm">-- removes duplicates</span>
+<span class="kw">SELECT</span> City <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> Age < <span class="num">25</span>;
+
+<span class="kw">SELECT</span> City <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> Age > <span class="num">35</span>
+<span class="kw">UNION ALL</span>                     <span class="cm">-- keeps all, including duplicates</span>
+<span class="kw">SELECT</span> City <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> Age < <span class="num">25</span>;</div></div></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">6</div><div class="qt">What happens to rows when using INNER JOIN if one table has no matching row?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab">With INNER JOIN, rows with no match in either table are completely excluded from the result. If customer_info has a customer with no salary record, that customer will not appear at all in an INNER JOIN with the salary table.</div><div class="tip w">⚠️ If you expect all rows from one table to appear even without a match, use LEFT JOIN instead of INNER JOIN.</div></div></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">7</div><div class="qt">How do you join three or more tables?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab">Chain multiple JOIN clauses. Each JOIN adds one more table. The ON clause specifies the relationship between that table and any previously joined table.</div><div class="code"><span class="cm">-- If we had a third table: customer_info → salary → bonus</span>
+<span class="kw">SELECT</span> c.FirstName, s.Salary, b.BonusAmount
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span>  s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">JOIN</span>   <span class="tbl">bonus</span>   b <span class="kw">ON</span> s.SalaryId   = b.SalaryId;</div></div></div>
+
+  <div class="qa" data-sec="joins"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(188,140,255,.12);color:var(--pu);">8</div><div class="qt">What is the ON clause in a JOIN? Can you JOIN on more than one condition?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pu);">Answer</div><div class="ab">The ON clause specifies which columns to match between the two tables. You can join on multiple conditions by chaining them with AND.</div><div class="code"><span class="cm">-- Join on a single condition</span>
+<span class="kw">ON</span> c.CustomerId = s.CustomerId
+
+<span class="cm">-- Join on multiple conditions</span>
+<span class="kw">ON</span> c.CustomerId = s.CustomerId <span class="kw">AND</span> c.City = <span class="str">'New York'</span></div></div></div>
+</section>
+
+<!-- ═══ SECTION 5: SUBQUERIES ═══ -->
+<section class="section" data-sec="subquery">
+  <div class="sec-hdr"><div class="sec-dot" style="background:var(--gn);"></div><div class="sec-title" style="color:var(--gn);">Subqueries — Nested Queries</div><div class="sec-count">8 questions</div></div>
+  <div class="sec-ctrls"><button class="sc-btn" onclick="exSec('subquery')">Expand all</button><button class="sc-btn" onclick="colSec('subquery')">Collapse all</button></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">1</div><div class="qt">What is a subquery? What are the 3 types?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="ab">A subquery is a SELECT statement nested inside another query. The inner query runs first. Three types: <strong>Scalar</strong> (returns one value, used in WHERE/SELECT), <strong>Table subquery</strong> (returns rows/columns, used in FROM), <strong>Correlated</strong> (references the outer query, runs per outer row).</div></div></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">2</div><div class="qt">How do you find customers earning above the overall average salary?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="code"><span class="cm">-- Scalar subquery in WHERE</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    s.Salary > (<span class="kw">SELECT</span> <span class="kw">AVG</span>(Salary) <span class="kw">FROM</span> <span class="tbl">salary</span>)
+<span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>;</div></div></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">3</div><div class="qt">What is a correlated subquery? Why is it slower than a regular subquery?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="ab">A correlated subquery references a column from the outer query — it cannot run independently. It re-executes once for every row the outer query processes. For a table with 10,000 rows, the subquery runs 10,000 times — making it potentially slow for large datasets.</div><div class="code"><span class="cm">-- Runs the inner SELECT once per outer row</span>
+<span class="kw">SELECT</span> c.FirstName, c.City, s.Salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span>  c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span>         s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>  s.Salary > (
+    <span class="kw">SELECT</span> <span class="kw">AVG</span>(s2.Salary)
+    <span class="kw">FROM</span>   <span class="tbl">customer_info</span> c2 <span class="kw">JOIN</span> <span class="tbl">salary</span> s2 <span class="kw">ON</span> c2.CustomerId = s2.CustomerId
+    <span class="kw">WHERE</span>  c2.City = c.City  <span class="cm">-- ← references outer query</span>
+);</div></div></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">4</div><div class="qt">How do you use a subquery in the FROM clause (table subquery)?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="ab">Put the subquery inside parentheses in the FROM clause and give it an alias — it behaves as a virtual table. This is also called a derived table or inline view.</div><div class="code"><span class="kw">SELECT</span> stats.City, stats.avg_sal
+<span class="kw">FROM</span>   (
+    <span class="kw">SELECT</span>   c.City, <span class="fn">ROUND</span>(<span class="kw">AVG</span>(s.Salary), <span class="num">2</span>) <span class="kw">AS</span> avg_sal
+    <span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+    <span class="kw">GROUP BY</span> c.City
+) <span class="kw">AS</span> stats                  <span class="cm">-- alias is required</span>
+<span class="kw">WHERE</span> stats.avg_sal > <span class="num">70000</span>;</div></div></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">5</div><div class="qt">What is the difference between a subquery and a CTE (WITH clause)?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="ab">Both achieve similar results. A CTE is named and defined once at the top using WITH...AS — making complex queries far more readable and reusable within the same query. A subquery is inline and anonymous. CTEs can also be recursive.</div><div class="code"><span class="cm">-- Subquery version (harder to read)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> (<span class="kw">SELECT</span> City, <span class="kw">AVG</span>(Salary) <span class="kw">FROM</span> ...) x <span class="kw">WHERE</span> x.avg > <span class="num">70000</span>;
+
+<span class="cm">-- CTE version (much cleaner)</span>
+<span class="kw">WITH</span> city_avg <span class="kw">AS</span> (
+    <span class="kw">SELECT</span> City, <span class="kw">AVG</span>(Salary) <span class="kw">AS</span> avg FROM ...
+)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> city_avg <span class="kw">WHERE</span> avg > <span class="num">70000</span>;</div></div></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">6</div><div class="qt">How do you use EXISTS vs IN for subqueries?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="ab"><strong>IN</strong> compares a value against a result set — it materialises the full list. <strong>EXISTS</strong> returns true as soon as it finds the first match — it is often faster for large datasets because it short-circuits.</div><div class="code"><span class="cm">-- IN: customers whose ID exists in salary table</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> CustomerId <span class="kw">IN</span> (<span class="kw">SELECT</span> CustomerId <span class="kw">FROM</span> <span class="tbl">salary</span>);
+
+<span class="cm">-- EXISTS: faster for large tables</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> c
+<span class="kw">WHERE</span> <span class="kw">EXISTS</span> (
+    <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> <span class="tbl">salary</span> s <span class="kw">WHERE</span> s.CustomerId = c.CustomerId
+);</div></div></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">7</div><div class="qt">How do you write a subquery inside an UPDATE statement?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="ab">Use a subquery in the SET clause or the WHERE clause of an UPDATE to calculate or filter dynamically.</div><div class="code"><span class="cm">-- Set salary to the company average for anyone below it</span>
+<span class="kw">UPDATE</span> <span class="tbl">salary</span>
+<span class="kw">SET</span>    Salary = (<span class="kw">SELECT</span> <span class="kw">AVG</span>(Salary) <span class="kw">FROM</span> (
+                     <span class="kw">SELECT</span> Salary <span class="kw">FROM</span> <span class="tbl">salary</span>
+                 ) <span class="kw">AS</span> tmp)
+<span class="kw">WHERE</span>  Salary < (<span class="kw">SELECT</span> <span class="kw">AVG</span>(Salary) <span class="kw">FROM</span> (
+                     <span class="kw">SELECT</span> Salary <span class="kw">FROM</span> <span class="tbl">salary</span>
+                 ) <span class="kw">AS</span> tmp2);</div></div></div>
+
+  <div class="qa" data-sec="subquery"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(63,185,80,.12);color:var(--gn);">8</div><div class="qt">How do you find customers living in cities that have at least 2 customers (using a subquery)?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--gn);">Answer</div><div class="code"><span class="kw">SELECT</span> FirstName, City
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span>  City <span class="kw">IN</span> (
+    <span class="kw">SELECT</span>   City
+    <span class="kw">FROM</span>     <span class="tbl">customer_info</span>
+    <span class="kw">GROUP BY</span> City
+    <span class="kw">HAVING</span>   <span class="kw">COUNT</span>(*) >= <span class="num">2</span>
+)
+<span class="kw">ORDER BY</span> City;</div></div></div>
+</section>
+
+<!-- ═══ SECTION 6: WINDOW FUNCTIONS ═══ -->
+<section class="section" data-sec="window">
+  <div class="sec-hdr"><div class="sec-dot" style="background:var(--go);"></div><div class="sec-title" style="color:var(--go);">Window Functions</div><div class="sec-count">8 questions</div></div>
+  <div class="sec-ctrls"><button class="sc-btn" onclick="exSec('window')">Expand all</button><button class="sc-btn" onclick="colSec('window')">Collapse all</button></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">1</div><div class="qt">What is a window function and how is it different from GROUP BY?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="ab">A window function computes a value for each row based on a "window" of related rows. Unlike GROUP BY, it does NOT collapse rows — every row remains in the output, with an extra computed column added. Uses OVER() clause.</div><div class="code"><span class="cm">-- GROUP BY: 6 rows (one per city)</span>
+<span class="kw">SELECT</span> City, <span class="kw">AVG</span>(Salary) <span class="kw">FROM</span> ... <span class="kw">GROUP BY</span> City;
+
+<span class="cm">-- Window: 15 rows (all customers + avg column)</span>
+<span class="kw">SELECT</span> FirstName, City, Salary,
+       <span class="kw">AVG</span>(Salary) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> City) <span class="kw">AS</span> city_avg
+<span class="kw">FROM</span> ...;</div></div></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">2</div><div class="qt">What is the difference between RANK(), DENSE_RANK(), and ROW_NUMBER()?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="ab">Given a tie for 2nd place between two rows: <strong>ROW_NUMBER</strong> assigns 2 and 3 (arbitrary tiebreak). <strong>RANK</strong> assigns 2 to both but skips 3, giving 4 next. <strong>DENSE_RANK</strong> assigns 2 to both and continues with 3 — no skipping.</div><div class="code"><span class="kw">SELECT</span> FirstName, Salary,
+       <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> Salary <span class="kw">DESC</span>) <span class="kw">AS</span> rn,
+       <span class="fn">RANK</span>()       <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> Salary <span class="kw">DESC</span>) <span class="kw">AS</span> rnk,
+       <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> Salary <span class="kw">DESC</span>) <span class="kw">AS</span> drnk
+<span class="kw">FROM</span>  <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</div></div></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">3</div><div class="qt">What does PARTITION BY do in a window function?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="ab">PARTITION BY divides the data into groups (like GROUP BY) but the window function resets and recalculates for each partition independently. All rows still appear in the output.</div><div class="code"><span class="cm">-- Rank salary within each city separately</span>
+<span class="kw">SELECT</span> FirstName, City, Salary,
+       <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+           <span class="kw">PARTITION BY</span> City
+           <span class="kw">ORDER BY</span>     Salary <span class="kw">DESC</span>
+       ) <span class="kw">AS</span> city_rank
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</div></div></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">4</div><div class="qt">How do you get the top-1 earner per city using window functions?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="ab">Rank salaries within each city using RANK() with PARTITION BY, wrap it in a subquery, then filter WHERE rank = 1. This is one of the most common interview patterns.</div><div class="code"><span class="kw">SELECT</span> * <span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> c.FirstName, c.City, s.Salary,
+           <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> c.City <span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>) <span class="kw">AS</span> rnk
+    <span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+) ranked
+<span class="kw">WHERE</span> rnk = <span class="num">1</span>;</div></div></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">5</div><div class="qt">What do LEAD() and LAG() do?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="ab"><strong>LAG(col)</strong> returns the value of a column from the previous row. <strong>LEAD(col)</strong> returns the value from the next row. Both operate within the window defined by OVER. Useful for period-over-period comparisons.</div><div class="code"><span class="kw">SELECT</span> FirstName, Salary,
+       <span class="fn">LAG</span>(Salary)  <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> Salary) <span class="kw">AS</span> prev_salary,
+       <span class="fn">LEAD</span>(Salary) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> Salary) <span class="kw">AS</span> next_salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</div></div></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">6</div><div class="qt">How do you calculate a cumulative (running) total using window functions?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="code"><span class="kw">SELECT</span> FirstName, Salary,
+       <span class="kw">SUM</span>(Salary) <span class="kw">OVER</span> (
+           <span class="kw">ORDER BY</span> Salary
+           <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+       ) <span class="kw">AS</span> cumulative_salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> Salary;</div></div></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">7</div><div class="qt">What is NTILE() and what is it used for?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="ab">NTILE(n) divides rows into n equal buckets and assigns a bucket number (1 to n) to each row. Commonly used for quartiles (NTILE(4)) or percentiles (NTILE(100)).</div><div class="code"><span class="cm">-- Divide customers into salary quartiles (4 equal groups)</span>
+<span class="kw">SELECT</span> FirstName, Salary,
+       <span class="fn">NTILE</span>(<span class="num">4</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> Salary) <span class="kw">AS</span> salary_quartile
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</div></div></div>
+
+  <div class="qa" data-sec="window"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(227,179,65,.12);color:var(--go);">8</div><div class="qt">Can you use a window function in a WHERE clause?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--go);">Answer</div><div class="ab">No — window functions cannot appear in WHERE or HAVING directly because they are evaluated after those clauses. Wrap the window function in a subquery or CTE, then filter in the outer query.</div><div class="code"><span class="cm">-- Wrong: cannot use RANK() in WHERE</span>
+<span class="cm">-- WHERE RANK() OVER (...) = 1  ← Error!</span>
+
+<span class="cm">-- Correct: wrap in subquery first</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> *, <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> City <span class="kw">ORDER BY</span> Salary <span class="kw">DESC</span>) <span class="kw">AS</span> rnk
+    <span class="kw">FROM</span> <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+) x <span class="kw">WHERE</span> rnk = <span class="num">1</span>;</div></div></div>
+</section>
+
+<!-- ═══ SECTION 7: ETL & STATS ═══ -->
+<section class="section" data-sec="etl">
+  <div class="sec-hdr"><div class="sec-dot" style="background:var(--pk);"></div><div class="sec-title" style="color:var(--pk);">ETL, Stored Procedures & Statistics</div><div class="sec-count">7 questions</div></div>
+  <div class="sec-ctrls"><button class="sc-btn" onclick="exSec('etl')">Expand all</button><button class="sc-btn" onclick="colSec('etl')">Collapse all</button></div>
+
+  <div class="qa" data-sec="etl"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(247,120,186,.12);color:var(--pk);">1</div><div class="qt">What does ETL stand for and what does each step do in SQL?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pk);">Answer</div><div class="ab"><strong>Extract</strong>: pull data from source (LOAD DATA INFILE, SELECT). <strong>Transform</strong>: clean and reshape — deduplicate, fix types, normalize with CASE WHEN, join sources. <strong>Load</strong>: write to target — INSERT...SELECT into a summary or warehouse table.</div></div></div>
+
+  <div class="qa" data-sec="etl"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(247,120,186,.12);color:var(--pk);">2</div><div class="qt">How do you load data from a CSV file into a MySQL table?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pk);">Answer</div><div class="code"><span class="kw">LOAD DATA INFILE</span> <span class="str">'/path/to/file.csv'</span>
+<span class="kw">INTO TABLE</span> <span class="tbl">customer_info</span>
+<span class="kw">FIELDS TERMINATED BY</span> <span class="str">','</span>
+<span class="kw">ENCLOSED BY</span> <span class="str">'"'</span>
+<span class="kw">LINES TERMINATED BY</span> <span class="str">'\n'</span>
+<span class="kw">IGNORE</span> <span class="num">1</span> <span class="kw">ROWS</span>   <span class="cm">-- skip header row</span>
+(CustomerId, FirstName, LastName, Age, City);</div><div class="tip i">💡 Enable file loading first: SET GLOBAL local_infile = 1;</div></div></div>
+
+  <div class="qa" data-sec="etl"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(247,120,186,.12);color:var(--pk);">3</div><div class="qt">How do you use INSERT...SELECT to copy data into a new table?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pk);">Answer</div><div class="ab">INSERT...SELECT combines creating and populating a table in one step. The SELECT can include JOINs, GROUP BY, and transformations — the result is inserted into the target table.</div><div class="code"><span class="kw">CREATE TABLE</span> <span class="tbl">city_summary</span> (City <span class="op">VARCHAR</span>(<span class="num">50</span>), avg_salary <span class="op">DECIMAL</span>(<span class="num">10</span>,<span class="num">2</span>), total <span class="op">INT</span>);
+
+<span class="kw">INSERT INTO</span> <span class="tbl">city_summary</span>
+<span class="kw">SELECT</span>   c.City,
+         <span class="fn">ROUND</span>(<span class="kw">AVG</span>(s.Salary), <span class="num">2</span>),
+         <span class="kw">COUNT</span>(*)
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.City;</div></div></div>
+
+  <div class="qa" data-sec="etl"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(247,120,186,.12);color:var(--pk);">4</div><div class="qt">What is a stored procedure and what are its 4 key benefits?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pk);">Answer</div><div class="ab">A stored procedure is a named, reusable block of SQL saved on the server. Benefits: <strong>Modularity</strong> (reusable blocks), <strong>Performance</strong> (precompiled = faster), <strong>Security</strong> (hide table structure, control access), <strong>Maintainability</strong> (change logic in one place).</div></div></div>
+
+  <div class="qa" data-sec="etl"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(247,120,186,.12);color:var(--pk);">5</div><div class="qt">Why do you need DELIMITER when creating a stored procedure?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pk);">Answer</div><div class="ab">MySQL uses semicolon ; to detect the end of each statement. A stored procedure body contains semicolons inside it. Changing the DELIMITER to // tells MySQL to wait for // before executing — preventing it from ending the procedure early on the first internal semicolon.</div><div class="code"><span class="kw">DELIMITER</span> //                     <span class="cm">-- change delimiter to //</span>
+<span class="kw">CREATE PROCEDURE</span> <span class="fn">GetCustInfo</span> (<span class="kw">IN</span> id <span class="op">INT</span>)
+<span class="kw">BEGIN</span>
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> CustomerId = id;
+<span class="kw">END</span> //                           <span class="cm">-- procedure ends here</span>
+<span class="kw">DELIMITER</span> ;                      <span class="cm">-- reset to normal</span>
+
+<span class="kw">CALL</span> <span class="fn">GetCustInfo</span>(<span class="num">7</span>);</div></div></div>
+
+  <div class="qa" data-sec="etl"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(247,120,186,.12);color:var(--pk);">6</div><div class="qt">What are IN, OUT, and INOUT parameters in a stored procedure?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pk);">Answer</div><div class="ab"><strong>IN</strong>: value passed into the procedure (read-only inside). <strong>OUT</strong>: value the procedure writes out to the caller (the result). <strong>INOUT</strong>: passed in, can be modified, and the modified value is returned.</div><div class="code"><span class="kw">DELIMITER</span> //
+<span class="kw">CREATE PROCEDURE</span> <span class="fn">GetAvg</span> (<span class="kw">OUT</span> result <span class="op">DECIMAL</span>(<span class="num">10</span>,<span class="num">2</span>))
+<span class="kw">BEGIN</span>
+    <span class="kw">SELECT</span> <span class="kw">AVG</span>(Salary) <span class="kw">INTO</span> result <span class="kw">FROM</span> <span class="tbl">salary</span>;
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;
+
+<span class="kw">CALL</span> <span class="fn">GetAvg</span>(@avg);
+<span class="kw">SELECT</span> @avg;</div></div></div>
+
+  <div class="qa" data-sec="etl"><div class="qa-q" onclick="tog(this)"><div class="qn" style="background:rgba(247,120,186,.12);color:var(--pk);">7</div><div class="qt">How do you calculate variance and standard deviation in MySQL?</div><div class="qch">▾</div></div><div class="qa-a"><div class="al" style="color:var(--pk);">Answer</div><div class="ab">MySQL has built-in functions VARIANCE() and STDDEV(). You can also calculate them manually using SUM and AVG for deeper understanding.</div><div class="code"><span class="cm">-- Built-in functions (easiest)</span>
+<span class="kw">SELECT</span>
+    <span class="fn">AVG</span>(Salary)      <span class="kw">AS</span> mean,
+    <span class="fn">VARIANCE</span>(Salary) <span class="kw">AS</span> variance,
+    <span class="fn">STDDEV</span>(Salary)   <span class="kw">AS</span> std_deviation,
+    <span class="fn">MAX</span>(Salary) - <span class="fn">MIN</span>(Salary) <span class="kw">AS</span> range_val
+<span class="kw">FROM</span> <span class="tbl">salary</span>;</div></div></div>
+</section>
+
+</main>
+
+<div class="pbar">Revealed <span class="pv" id="oc">0 / 55</span></div>
+
+<script>
+let opened=new Set();
+document.querySelectorAll('.qa').forEach((c,i)=>c.dataset.id=i);
+function tog(q){const c=q.closest('.qa');c.classList.toggle('open');const id=c.dataset.id;c.classList.contains('open')?opened.add(id):opened.delete(id);document.getElementById('oc').textContent=opened.size+' / 55';}
+function exSec(s){document.querySelectorAll(`.qa[data-sec="${s}"]`).forEach((c,i)=>{c.classList.add('open');opened.add(c.dataset.id);});document.getElementById('oc').textContent=opened.size+' / 55';}
+function colSec(s){document.querySelectorAll(`.qa[data-sec="${s}"]`).forEach(c=>{c.classList.remove('open');opened.delete(c.dataset.id);});document.getElementById('oc').textContent=opened.size+' / 55';}
+document.getElementById('pills').addEventListener('click',e=>{
+  const p=e.target.closest('.pill');if(!p)return;
+  const cat=p.dataset.cat;
+  document.querySelectorAll('.pill').forEach(b=>b.classList.remove('on'));p.classList.add('on');
+  document.querySelectorAll('.section').forEach(s=>{
+    cat==='all'||s.dataset.sec===cat?s.removeAttribute('hidden'):s.setAttribute('hidden','');
+  });
+});
+</script>
+</body>
+</html>

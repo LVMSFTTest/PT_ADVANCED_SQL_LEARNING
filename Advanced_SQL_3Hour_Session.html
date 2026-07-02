@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced SQL — 3-Hour Session</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2330;--border:#21262d;--border2:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--dim:#484f58;
+  --orange:#f0883e;--blue:#58a6ff;--green:#3fb950;--red:#f85149;
+  --purple:#bc8cff;--teal:#39d3c3;--gold:#e3b341;--pink:#f778ba;
+  --glow-o:rgba(240,136,62,.10);--glow-b:rgba(88,166,255,.10);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;font-size:14px;}
+
+/* NAV */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(13,17,23,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;flex-direction:column;}
+.topbar-brand{display:flex;align-items:center;gap:8px;padding:8px 18px 3px;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;color:var(--orange);}
+.topbar-brand span{color:var(--muted);font-weight:500;font-size:11px;}
+.nav-scroll{display:flex;overflow-x:auto;padding:4px 10px 6px;gap:3px;scrollbar-width:none;}
+.nav-scroll::-webkit-scrollbar{display:none;}
+.nav-btn{flex-shrink:0;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid transparent;white-space:nowrap;transition:all .2s;}
+.nav-btn:hover{color:var(--text);background:var(--surface2);}
+.nav-btn.active{color:var(--orange);background:var(--glow-o);border-color:rgba(240,136,62,.28);}
+
+/* PAGES */
+.pages{margin-top:74px;height:calc(100vh - 74px);overflow:hidden;}
+.page{display:none;height:100%;overflow-y:auto;padding:28px 22px 70px;}
+.page.active{display:block;}
+.pg{max-width:880px;margin:0 auto;}
+
+/* TYPE */
+h1{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;line-height:1.2;margin-bottom:6px;}
+h2{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--blue);margin:28px 0 10px;}
+h3{font-size:15px;font-weight:700;color:var(--teal);margin:16px 0 6px;}
+p{font-size:14px;line-height:1.75;margin-bottom:8px;}
+li{font-size:14px;line-height:1.7;margin-bottom:4px;}
+.sub{font-size:15px;color:var(--muted);line-height:1.65;margin-bottom:20px;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:12px 0;transition:border-color .2s;}
+.card:hover{border-color:var(--border2);}
+.card.blue{border-left:4px solid var(--blue);}
+.card.orange{border-left:4px solid var(--orange);}
+.card.green{border-left:4px solid var(--green);}
+.card.red{border-left:4px solid var(--red);}
+.card.purple{border-left:4px solid var(--purple);}
+.card.gold{border-left:4px solid var(--gold);}
+.card.teal{border-left:4px solid var(--teal);}
+.card.pink{border-left:4px solid var(--pink);}
+
+.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;padding:3px 9px;border-radius:5px;margin-bottom:8px;}
+.tag.bl{background:rgba(88,166,255,.14);color:var(--blue);}
+.tag.or{background:rgba(240,136,62,.14);color:var(--orange);}
+.tag.gn{background:rgba(63,185,80,.14);color:var(--green);}
+.tag.rd{background:rgba(248,81,73,.14);color:var(--red);}
+.tag.pu{background:rgba(188,140,255,.14);color:var(--purple);}
+.tag.go{background:rgba(227,179,65,.14);color:var(--gold);}
+.tag.tl{background:rgba(57,211,195,.14);color:var(--teal);}
+.tag.pk{background:rgba(247,120,186,.14);color:var(--pink);}
+
+/* CODE */
+.codeblock{background:#010409;border:1px solid var(--border);border-radius:10px;margin:10px 0;overflow-x:auto;}
+.cb-top{display:flex;align-items:center;justify-content:space-between;padding:7px 14px 5px;border-bottom:1px solid var(--border);}
+.cb-dots{display:flex;gap:5px;}
+.cb-dot{width:9px;height:9px;border-radius:50%;}
+.cb-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:.8px;}
+.codeblock pre{padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;color:var(--text);white-space:pre;}
+.kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#6e7681;font-style:italic;}.num{color:#f2cc60;}.op{color:#79c0ff;}.tbl{color:#7ee787;}.col{color:#ffa657;}
+
+/* EXAMPLE BOX */
+.ex{background:linear-gradient(135deg,rgba(88,166,255,.04),rgba(57,211,195,.03));border:1px solid rgba(88,166,255,.18);border-radius:12px;padding:18px 20px;margin:14px 0;}
+.ex-title{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+/* TABLE */
+.tb{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+.tb th{background:var(--surface2);color:var(--blue);padding:8px 12px;text-align:left;font-weight:700;font-size:11.5px;letter-spacing:.5px;border-bottom:2px solid var(--border);}
+.tb td{padding:8px 12px;border-bottom:1px solid var(--border);}
+.tb tr:hover td{background:rgba(88,166,255,.03);}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;}
+.gc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.gc.gn{border-top:3px solid var(--green);}
+.gc.rd{border-top:3px solid var(--red);}
+.gc.bl{border-top:3px solid var(--blue);}
+.gc.or{border-top:3px solid var(--orange);}
+
+/* FLOW */
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:12px 0;}
+.fb{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;flex-shrink:0;text-align:center;}
+.fa{color:var(--orange);font-size:18px;flex-shrink:0;}
+
+/* BADGE ROW */
+.bds{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.bd{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex:1;min-width:100px;text-align:center;}
+.bd .v{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--orange);}
+.bd .l{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* STEPS */
+.steps{counter-reset:st;list-style:none;padding:0;}
+.steps li{counter-increment:st;padding:10px 12px 10px 46px;position:relative;margin-bottom:5px;background:var(--surface);border:1px solid var(--border);border-radius:9px;}
+.steps li::before{content:counter(st);position:absolute;left:11px;top:10px;width:23px;height:23px;background:var(--glow-b);border:1px solid rgba(88,166,255,.25);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--blue);}
+
+/* TIP */
+.tip{margin:12px 0;border-radius:8px;padding:10px 14px;font-size:13px;line-height:1.65;}
+.tip.warn{background:rgba(248,81,73,.08);border-left:3px solid var(--red);color:#fca5a5;}
+.tip.info{background:rgba(88,166,255,.08);border-left:3px solid var(--blue);color:#93c5fd;}
+.tip.good{background:rgba(63,185,80,.08);border-left:3px solid var(--green);color:#6ee7b7;}
+.tip.gold{background:rgba(227,179,65,.08);border-left:3px solid var(--gold);color:#fcd34d;}
+
+/* WORKSHOP */
+.workshop{background:linear-gradient(135deg,rgba(240,136,62,.05),rgba(188,140,255,.04));border:1px solid rgba(240,136,62,.25);border-radius:12px;padding:18px 22px;margin:14px 0;}
+.wt{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+/* JOIN VIZ */
+.join-viz{display:flex;justify-content:center;align-items:center;gap:30px;flex-wrap:wrap;margin:16px 0;}
+.jset{text-align:center;}
+.jcircles{display:flex;justify-content:center;}
+.jc{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin:0 -18px;}
+.jlabel{font-size:11px;color:var(--muted);margin-top:8px;}
+
+/* PROGRESS */
+.prog{position:fixed;bottom:0;left:0;height:3px;background:var(--orange);z-index:300;transition:width .15s;}
+.clock{position:fixed;bottom:12px;right:14px;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+
+@media(max-width:680px){h1{font-size:22px;}h2{font-size:16px;}.g2,.g3,.g4{grid-template-columns:1fr;}.page{padding:18px 13px 60px;}.nav-btn{font-size:10px;padding:4px 9px;}}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-brand">🚀 Advanced SQL — 3-Hour Session <span>• Day 2 • Intermediate to Advanced</span></div>
+  <div class="nav-scroll" id="navTabs"></div>
+</nav>
+
+<div class="pages" id="pagesWrap">
+
+<!-- ══════════ PAGE 0 — AGENDA ══════════ -->
+<div class="page" id="page-0">
+<div class="pg">
+  <h1>Advanced SQL — Day 2 🚀</h1>
+  <p class="sub">Building on the basics — deeper querying, joins, subqueries, window functions, ETL, and statistics.</p>
+
+  <h2>What We Cover Today</h2>
+  <div class="flow">
+    <div class="fb" style="border-color:var(--blue);">ORDER BY<br><small style="color:var(--muted);">Advanced Sorting</small></div><div class="fa">→</div>
+    <div class="fb" style="border-color:var(--orange);">Filtering<br><small style="color:var(--muted);">IN / AND / OR / NOT</small></div><div class="fa">→</div>
+    <div class="fb" style="border-color:var(--teal);">GROUP BY<br><small style="color:var(--muted);">+ HAVING</small></div><div class="fa">→</div>
+    <div class="fb" style="border-color:var(--purple);">JOINs<br><small style="color:var(--muted);">All 4 types</small></div><div class="fa">→</div>
+    <div class="fb" style="border-color:var(--green);">Subqueries<br><small style="color:var(--muted);">Nested queries</small></div><div class="fa">→</div>
+    <div class="fb" style="border-color:var(--gold);">Window Fns<br><small style="color:var(--muted);">RANK / ROW_NUMBER</small></div><div class="fa">→</div>
+    <div class="fb" style="border-color:var(--pink);">ETL<br><small style="color:var(--muted);">Extract / Transform / Load</small></div>
+  </div>
+
+  <h2>Session Schedule</h2>
+  <table class="tb">
+    <tr><th>Time</th><th>Topic</th><th>Key Concepts</th></tr>
+    <tr><td style="color:var(--orange);font-weight:700;">0:00–0:20</td><td>Advanced Sorting & Filtering</td><td>ORDER BY expressions, NULLS, CASE in ORDER BY, IN/AND/OR/NOT</td></tr>
+    <tr><td style="color:var(--blue);font-weight:700;">0:20–0:45</td><td>GROUP BY, HAVING & Math</td><td>Grouping, aggregate filtering, arithmetic, CASE WHEN math</td></tr>
+    <tr><td style="color:var(--purple);font-weight:700;">0:45–1:20</td><td>All 4 JOIN Types</td><td>INNER, LEFT, RIGHT, FULL OUTER + customer_salary dataset</td></tr>
+    <tr><td style="color:var(--green);font-weight:700;">1:20–1:50</td><td>Subqueries</td><td>Scalar, table, correlated subqueries</td></tr>
+    <tr><td style="color:var(--gold);font-weight:700;">1:50–2:20</td><td>Window Functions</td><td>RANK, DENSE_RANK, ROW_NUMBER, LEAD, LAG, PARTITION BY</td></tr>
+    <tr><td style="color:var(--teal);font-weight:700;">2:20–2:40</td><td>ETL & Statistics</td><td>LOAD DATA, transform, variance, std deviation</td></tr>
+    <tr><td style="color:var(--pink);font-weight:700;">2:40–3:00</td><td>Workshop</td><td>16 hands-on questions from the slide deck</td></tr>
+  </table>
+
+  <h2>Our Dataset — customer_salary</h2>
+  <div class="g2">
+    <div class="card blue">
+      <span class="tag bl">customer_info</span>
+      <p>15 customers with CustomerId, FirstName, LastName, Age, City (New York, LA, Chicago, Miami, Seattle, Houston)</p>
+    </div>
+    <div class="card orange">
+      <span class="tag or">salary</span>
+      <p>15 salary records linked via Foreign Key (CustomerId). Salaries range from $45,000 to $100,000.</p>
+    </div>
+  </div>
+
+  <div class="bds">
+    <div class="bd"><div class="v">7</div><div class="l">Major Topics</div></div>
+    <div class="bd"><div class="v">4</div><div class="l">JOIN Types</div></div>
+    <div class="bd"><div class="v">16</div><div class="l">Workshop Questions</div></div>
+    <div class="bd"><div class="v">3hrs</div><div class="l">Session Length</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 1 — ADVANCED SORTING ══════════ -->
+<div class="page" id="page-1">
+<div class="pg">
+  <h1>📊 Advanced ORDER BY</h1>
+  <p class="sub">Sorting goes far beyond ASC and DESC — you can sort by expressions, functions, aliases, custom logic, and handle NULLs.</p>
+
+  <h2>Basic Syntax Recap</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">ORDER BY</span></div>
+  <pre><span class="kw">SELECT</span> column1, column2
+<span class="kw">FROM</span>   table_name
+<span class="kw">ORDER BY</span> column_to_sort [<span class="kw">ASC</span> | <span class="kw">DESC</span>];
+
+<span class="cm">-- Multiple columns: sort last name ASC, then first name ASC within same last name</span>
+<span class="kw">SELECT</span> first_name, last_name
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span> last_name <span class="kw">ASC</span>, first_name <span class="kw">ASC</span>;</pre></div>
+
+  <h2>Sorting with Expressions & Functions</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Expressions in ORDER BY</span></div>
+  <pre><span class="cm">-- Sort by name length (shortest names first)</span>
+<span class="kw">SELECT</span> FirstName, <span class="fn">LENGTH</span>(FirstName) <span class="kw">AS</span> name_len
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span> <span class="fn">LENGTH</span>(FirstName) <span class="kw">ASC</span>;
+
+<span class="cm">-- Sort by absolute value (distance from 70000)</span>
+<span class="kw">SELECT</span> FirstName, s.Salary,
+       <span class="fn">ABS</span>(s.Salary - <span class="num">70000</span>) <span class="kw">AS</span> distance_from_70k
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> <span class="fn">ABS</span>(s.Salary - <span class="num">70000</span>) <span class="kw">ASC</span>;  <span class="cm">-- closest to 70k first</span></pre></div>
+
+  <h2>Sorting with a Column Alias</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Alias in ORDER BY</span></div>
+  <pre><span class="cm">-- Use the alias 'annual_salary' in ORDER BY</span>
+<span class="kw">SELECT</span> FirstName, LastName,
+       s.Salary * <span class="num">12</span> <span class="kw">AS</span> annual_salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> annual_salary <span class="kw">DESC</span>;  <span class="cm">-- alias works here</span></pre></div>
+
+  <h2>Sorting with CASE WHEN (Custom Priority)</h2>
+  <div class="ex"><div class="ex-title">🎓 Real-World Use Case</div>
+  <p>You want "New York" customers to always appear first, then everyone else alphabetically by city.</p></div>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">CASE in ORDER BY</span></div>
+  <pre><span class="kw">SELECT</span> FirstName, City
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span>
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> City = <span class="str">'New York'</span> <span class="kw">THEN</span> <span class="num">0</span>   <span class="cm">-- New York always first</span>
+        <span class="kw">ELSE</span>                          <span class="num">1</span>   <span class="cm">-- everything else after</span>
+    <span class="kw">END</span>,
+    City <span class="kw">ASC</span>;                             <span class="cm">-- alphabetical within each group</span></pre></div>
+
+  <h2>Advanced Filtering — IN, AND, OR, NOT</h2>
+  <div class="g2">
+    <div class="card blue"><span class="tag bl">IN</span><p>Match against a list of values. Cleaner than multiple OR conditions.</p>
+    <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">IN</span></div>
+    <pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> City <span class="kw">IN</span> (<span class="str">'New York'</span>, <span class="str">'Miami'</span>);</pre></div></div>
+
+    <div class="card orange"><span class="tag or">NOT IN</span><p>Exclude a list of values.</p>
+    <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">NOT IN</span></div>
+    <pre><span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> City <span class="kw">NOT IN</span> (<span class="str">'Los Angeles'</span>);</pre></div></div>
+  </div>
+
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">AND / OR / NOT</span></div>
+  <pre><span class="cm">-- AND: both conditions must be true</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> City = <span class="str">'New York'</span> <span class="kw">AND</span> Age > <span class="num">30</span>;
+
+<span class="cm">-- OR: at least one condition true</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> City = <span class="str">'New York'</span> <span class="kw">OR</span> City = <span class="str">'Miami'</span>;
+
+<span class="cm">-- NOT: negate the condition</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> <span class="kw">NOT</span> City = <span class="str">'Los Angeles'</span>;
+
+<span class="cm">-- Complex combination with parentheses</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> (City = <span class="str">'Miami'</span> <span class="kw">AND</span> Age > <span class="num">30</span>)
+   <span class="kw">OR</span> (City = <span class="str">'Chicago'</span> <span class="kw">AND</span> Age < <span class="num">28</span>);</pre></div>
+
+  <div class="tip info">💡 Use parentheses when mixing AND and OR — AND has higher precedence and can give unexpected results without them.</div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 2 — GROUP BY + MATH ══════════ -->
+<div class="page" id="page-2">
+<div class="pg">
+  <h1>📊 GROUP BY, HAVING & Math</h1>
+  <p class="sub">Grouping summarises rows. Math operations create computed columns. Together they power all reporting.</p>
+
+  <h2>GROUP BY + Aggregates</h2>
+  <div class="ex"><div class="ex-title">🎓 Mental Model</div>
+  <p>Without GROUP BY → one number for the whole table. With GROUP BY City → one number per city.</p></div>
+
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">GROUP BY</span></div>
+  <pre><span class="cm">-- Customer count and average salary per city</span>
+<span class="kw">SELECT</span>   c.City,
+         <span class="kw">COUNT</span>(*) <span class="kw">AS</span> customer_count,
+         <span class="fn">ROUND</span>(<span class="kw">AVG</span>(s.Salary), <span class="num">2</span>) <span class="kw">AS</span> avg_salary,
+         <span class="kw">MAX</span>(s.Salary) <span class="kw">AS</span> top_salary,
+         <span class="kw">SUM</span>(s.Salary) <span class="kw">AS</span> total_payroll
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.City
+<span class="kw">ORDER BY</span> avg_salary <span class="kw">DESC</span>;
+
+<span class="cm">-- Average salary grouped by age</span>
+<span class="kw">SELECT</span>   c.Age,
+         <span class="fn">ROUND</span>(<span class="kw">AVG</span>(s.Salary), <span class="num">2</span>) <span class="kw">AS</span> avg_salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.Age
+<span class="kw">ORDER BY</span> c.Age;</pre></div>
+
+  <h2>HAVING — Filter After Grouping</h2>
+  <div class="card blue">
+    <span class="tag bl">WHERE vs HAVING</span>
+    <table class="tb" style="margin-top:8px;">
+      <tr><th>Clause</th><th>Filters</th><th>Can use Aggregates?</th><th>When it runs</th></tr>
+      <tr><td style="color:var(--green);font-weight:700;">WHERE</td><td>Individual rows</td><td>❌ No</td><td>Before GROUP BY</td></tr>
+      <tr><td style="color:var(--orange);font-weight:700;">HAVING</td><td>Groups</td><td>✅ Yes</td><td>After GROUP BY</td></tr>
+    </table>
+  </div>
+
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">HAVING</span></div>
+  <pre><span class="cm">-- Cities with more than 1 customer</span>
+<span class="kw">SELECT</span>   City, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> count
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span>
+<span class="kw">GROUP BY</span> City
+<span class="kw">HAVING</span>   <span class="kw">COUNT</span>(*) > <span class="num">1</span>;
+
+<span class="cm">-- Cities where total salary > 100,000</span>
+<span class="kw">SELECT</span>   c.City,
+         <span class="kw">SUM</span>(s.Salary) <span class="kw">AS</span> total_salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.City
+<span class="kw">HAVING</span>   <span class="kw">SUM</span>(s.Salary) > <span class="num">100000</span>
+<span class="kw">ORDER BY</span> total_salary <span class="kw">DESC</span>;</pre></div>
+
+  <h2>Mathematical Operations</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Arithmetic</span></div>
+  <pre><span class="cm">-- Annual salary, tax estimate, and net pay in one query</span>
+<span class="kw">SELECT</span> c.FirstName,
+       s.Salary                         <span class="kw">AS</span> monthly,
+       s.Salary * <span class="num">12</span>                    <span class="kw">AS</span> annual,
+       s.Salary * <span class="num">12</span> * <span class="num">0.20</span>             <span class="kw">AS</span> tax_estimate,
+       s.Salary * <span class="num">12</span> * (<span class="num">1</span> - <span class="num">0.20</span>)       <span class="kw">AS</span> net_annual
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;
+
+<span class="cm">-- CASE WHEN for conditional discount</span>
+<span class="kw">SELECT</span> FirstName, s.Salary,
+       <span class="kw">CASE</span>
+           <span class="kw">WHEN</span> s.Salary >= <span class="num">90000</span> <span class="kw">THEN</span> s.Salary * <span class="num">0.10</span>  <span class="cm">-- 10% bonus</span>
+           <span class="kw">WHEN</span> s.Salary >= <span class="num">70000</span> <span class="kw">THEN</span> s.Salary * <span class="num">0.05</span>  <span class="cm">-- 5% bonus</span>
+           <span class="kw">ELSE</span>                         s.Salary * <span class="num">0.02</span>  <span class="cm">-- 2% bonus</span>
+       <span class="kw">END</span> <span class="kw">AS</span> bonus
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</pre></div>
+
+  <h2>LIMIT with OFFSET — Pagination</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">LIMIT + OFFSET</span></div>
+  <pre><span class="cm">-- First 5 customers ordered by last name</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">ORDER BY</span> LastName <span class="kw">ASC</span> <span class="kw">LIMIT</span> <span class="num">5</span>;
+
+<span class="cm">-- NEXT 3 customers (rows 6-8) — skip first 5, take 3</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span> Age <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">3</span> <span class="kw">OFFSET</span> <span class="num">5</span>;   <span class="cm">-- skip 5, return rows 6-8</span></pre></div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 3 — JOINS ══════════ -->
+<div class="page" id="page-3">
+<div class="pg">
+  <h1>🔗 All 4 JOIN Types</h1>
+  <p class="sub">JOINs combine data from multiple tables. Understanding which JOIN to use is one of the most important SQL skills.</p>
+
+  <h2>Visual Overview</h2>
+  <div class="join-viz">
+    <div class="jset">
+      <div class="jcircles">
+        <div class="jc" style="background:rgba(248,81,73,.35);border:2px solid var(--red);color:#fca5a5;">A</div>
+        <div class="jc" style="background:rgba(248,81,73,.7);border:2px solid var(--red);color:white;z-index:1;">∩</div>
+        <div class="jc" style="background:rgba(88,166,255,.35);border:2px solid var(--blue);color:#93c5fd;">B</div>
+      </div>
+      <div class="jlabel">INNER JOIN<br>Overlap only</div>
+    </div>
+    <div class="jset">
+      <div class="jcircles">
+        <div class="jc" style="background:rgba(240,136,62,.65);border:2px solid var(--orange);color:white;">A</div>
+        <div class="jc" style="background:rgba(240,136,62,.3);border:2px solid var(--orange);color:#fed7aa;margin-left:-18px;">+B</div>
+      </div>
+      <div class="jlabel">LEFT JOIN<br>All of A</div>
+    </div>
+    <div class="jset">
+      <div class="jcircles">
+        <div class="jc" style="background:rgba(63,185,80,.3);border:2px solid var(--green);color:#86efac;">A+</div>
+        <div class="jc" style="background:rgba(63,185,80,.65);border:2px solid var(--green);color:white;margin-left:-18px;">B</div>
+      </div>
+      <div class="jlabel">RIGHT JOIN<br>All of B</div>
+    </div>
+    <div class="jset">
+      <div class="jcircles">
+        <div class="jc" style="background:rgba(188,140,255,.5);border:2px solid var(--purple);color:white;">A</div>
+        <div class="jc" style="background:rgba(188,140,255,.5);border:2px solid var(--purple);color:white;margin-left:-18px;">B</div>
+      </div>
+      <div class="jlabel">FULL OUTER<br>Everything</div>
+    </div>
+  </div>
+
+  <h2>1. INNER JOIN — Only Matching Rows</h2>
+  <div class="ex"><div class="ex-title">🎓 Analogy</div><p>Only students who are enrolled AND have a grade appear. Students without a grade — excluded. Grades without a student — excluded.</p></div>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">INNER JOIN</span></div>
+  <pre><span class="cm">-- All customers WITH a salary record (15 rows)</span>
+<span class="kw">SELECT</span>   c.CustomerId,
+         <span class="fn">CONCAT</span>(c.FirstName, <span class="str">' '</span>, c.LastName) <span class="kw">AS</span> full_name,
+         c.City,
+         s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">INNER JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>;</pre></div>
+
+  <h2>2. LEFT JOIN — All from Left Table</h2>
+  <div class="ex"><div class="ex-title">🎓 Analogy</div><p>All customers appear — even those with no salary record. Salary columns will show NULL for customers with no match.</p></div>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">LEFT JOIN</span></div>
+  <pre><span class="cm">-- Every customer, salary is NULL if no record</span>
+<span class="kw">SELECT</span>   c.CustomerId, c.FirstName, c.City,
+         s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">LEFT JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;
+
+<span class="cm">-- Find customers with NO salary record (NULL filter)</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">LEFT JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    s.SalaryId <span class="kw">IS NULL</span>;  <span class="cm">-- customers without salary</span></pre></div>
+
+  <h2>3. RIGHT JOIN — All from Right Table</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">RIGHT JOIN</span></div>
+  <pre><span class="cm">-- All salary records appear, even if customer is missing</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City,
+         s.SalaryId, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">RIGHT JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</pre></div>
+
+  <h2>4. FULL OUTER JOIN — Everything from Both</h2>
+  <div class="tip gold">⚡ MySQL does not support FULL OUTER JOIN directly. Simulate it using UNION of LEFT JOIN and RIGHT JOIN.</div>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">FULL OUTER (MySQL simulation)</span></div>
+  <pre><span class="cm">-- Full outer join simulation in MySQL</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">LEFT JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+
+<span class="kw">UNION</span>
+
+<span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">RIGHT JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</pre></div>
+
+  <h2>JOIN Comparison Table</h2>
+  <table class="tb">
+    <tr><th>JOIN Type</th><th>Left Table Rows</th><th>Right Table Rows</th><th>Unmatched Rows</th></tr>
+    <tr><td style="color:var(--red);font-weight:700;">INNER</td><td>Only matching</td><td>Only matching</td><td>❌ Excluded</td></tr>
+    <tr><td style="color:var(--orange);font-weight:700;">LEFT</td><td>All rows</td><td>Only matching</td><td>NULL on right side</td></tr>
+    <tr><td style="color:var(--green);font-weight:700;">RIGHT</td><td>Only matching</td><td>All rows</td><td>NULL on left side</td></tr>
+    <tr><td style="color:var(--purple);font-weight:700;">FULL OUTER</td><td>All rows</td><td>All rows</td><td>NULL on either side</td></tr>
+  </table>
+</div>
+</div>
+
+<!-- ══════════ PAGE 4 — SUBQUERIES ══════════ -->
+<div class="page" id="page-4">
+<div class="pg">
+  <h1>🔄 Subqueries — Queries Inside Queries</h1>
+  <p class="sub">A subquery is a SELECT statement nested inside another query. The inner query runs first. Its result is used by the outer query.</p>
+
+  <h2>3 Types of Subqueries</h2>
+  <div class="g3">
+    <div class="gc bl"><h4 style="color:var(--blue);">Scalar</h4><p style="font-size:12px;color:var(--muted);">Returns a single value. Used in WHERE or SELECT comparisons.</p></div>
+    <div class="gc or"><h4 style="color:var(--orange);">Table Subquery</h4><p style="font-size:12px;color:var(--muted);">Returns rows + columns. Used in FROM clause as a virtual table.</p></div>
+    <div class="gc gn"><h4 style="color:var(--green);">Correlated</h4><p style="font-size:12px;color:var(--muted);">References the outer query. Runs once per outer row.</p></div>
+  </div>
+
+  <h2>Scalar Subquery — Single Value</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Scalar Subquery</span></div>
+  <pre><span class="cm">-- Customers earning MORE than the average salary</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    s.Salary > (
+             <span class="kw">SELECT</span> <span class="kw">AVG</span>(Salary) <span class="kw">FROM</span> <span class="tbl">salary</span>   <span class="cm">-- single value: 72,600</span>
+         )
+<span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>;
+
+<span class="cm">-- Find the customer with the highest salary</span>
+<span class="kw">SELECT</span> c.FirstName, s.Salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>  s.Salary = (<span class="kw">SELECT MAX</span>(Salary) <span class="kw">FROM</span> <span class="tbl">salary</span>);</pre></div>
+
+  <h2>Table Subquery — Virtual Table in FROM</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Table Subquery</span></div>
+  <pre><span class="cm">-- Treat the subquery result as a temporary table</span>
+<span class="kw">SELECT</span>   city_stats.City,
+         city_stats.avg_sal,
+         city_stats.total_customers
+<span class="kw">FROM</span>     (
+             <span class="kw">SELECT</span>   c.City,
+                      <span class="fn">ROUND</span>(<span class="kw">AVG</span>(s.Salary), <span class="num">2</span>) <span class="kw">AS</span> avg_sal,
+                      <span class="kw">COUNT</span>(*) <span class="kw">AS</span> total_customers
+             <span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+             <span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+             <span class="kw">GROUP BY</span> c.City
+         ) <span class="kw">AS</span> city_stats           <span class="cm">-- must give subquery an alias</span>
+<span class="kw">WHERE</span>    city_stats.avg_sal > <span class="num">70000</span>
+<span class="kw">ORDER BY</span> city_stats.avg_sal <span class="kw">DESC</span>;</pre></div>
+
+  <h2>Correlated Subquery — Row-by-Row Comparison</h2>
+  <div class="ex"><div class="ex-title">🎓 How It Works</div>
+  <p>A correlated subquery references a column from the outer query. For every row the outer query processes, the inner query re-executes using that row's values.</p></div>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Correlated Subquery</span></div>
+  <pre><span class="cm">-- Employees earning more than their city's average</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span>  c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span>         s  <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    s.Salary > (
+             <span class="kw">SELECT</span> <span class="kw">AVG</span>(s2.Salary)
+             <span class="kw">FROM</span>   <span class="tbl">customer_info</span>  c2
+             <span class="kw">JOIN</span>   <span class="tbl">salary</span>         s2 <span class="kw">ON</span> c2.CustomerId = s2.CustomerId
+             <span class="kw">WHERE</span>  c2.City = c.City  <span class="cm">-- ← references outer query's city</span>
+         )
+<span class="kw">ORDER BY</span> c.City, s.Salary <span class="kw">DESC</span>;</pre></div>
+
+  <h2>Subquery with IN</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Subquery + IN</span></div>
+  <pre><span class="cm">-- Customers who live in cities that have at least 2 customers</span>
+<span class="kw">SELECT</span> FirstName, City
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span>  City <span class="kw">IN</span> (
+           <span class="kw">SELECT</span>   City
+           <span class="kw">FROM</span>     <span class="tbl">customer_info</span>
+           <span class="kw">GROUP BY</span> City
+           <span class="kw">HAVING</span>   <span class="kw">COUNT</span>(*) >= <span class="num">2</span>
+       )
+<span class="kw">ORDER BY</span> City;</pre></div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 5 — WINDOW FUNCTIONS ══════════ -->
+<div class="page" id="page-5">
+<div class="pg">
+  <h1>🪟 Window Functions</h1>
+  <p class="sub">Window functions calculate a value for each row based on a "window" of related rows — without collapsing them into groups like GROUP BY does.</p>
+
+  <h2>Window Functions vs GROUP BY</h2>
+  <div class="g2">
+    <div class="card orange"><span class="tag or">GROUP BY</span><p>Collapses rows into groups. You get ONE row per group.</p><p style="color:var(--muted);font-size:13px;">You lose individual row data.</p></div>
+    <div class="card blue"><span class="tag bl">WINDOW FUNCTION</span><p>Keeps all rows. Adds a computed column to each row based on surrounding rows.</p><p style="color:var(--muted);font-size:13px;">Individual data is preserved.</p></div>
+  </div>
+
+  <h2>Syntax</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Window Function Syntax</span></div>
+  <pre><span class="fn">function_name</span>() <span class="kw">OVER</span> (
+    [<span class="kw">PARTITION BY</span> column]   <span class="cm">-- divide rows into groups (like GROUP BY)</span>
+    [<span class="kw">ORDER BY</span>    column]    <span class="cm">-- order rows within each partition</span>
+)</pre></div>
+
+  <h2>ROW_NUMBER, RANK, DENSE_RANK</h2>
+  <div class="ex"><div class="ex-title">🎓 The Difference</div>
+  <p>If two people tie for 2nd place: <strong>ROW_NUMBER</strong> gives them 2 and 3 (arbitrary tiebreak). <strong>RANK</strong> gives both 2 but skips to 4 next. <strong>DENSE_RANK</strong> gives both 2 and continues with 3.</p></div>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">ROW_NUMBER / RANK / DENSE_RANK</span></div>
+  <pre><span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary,
+         <span class="fn">ROW_NUMBER</span>()   <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>) <span class="kw">AS</span> row_num,
+         <span class="fn">RANK</span>()         <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>) <span class="kw">AS</span> salary_rank,
+         <span class="fn">DENSE_RANK</span>()   <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>) <span class="kw">AS</span> dense_rank
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;
+
+<span class="cm">-- PARTITION BY: rank within each city separately</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary,
+         <span class="fn">RANK</span>() <span class="kw">OVER</span> (
+             <span class="kw">PARTITION BY</span> c.City
+             <span class="kw">ORDER BY</span>     s.Salary <span class="kw">DESC</span>
+         ) <span class="kw">AS</span> city_rank
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> c.City, city_rank;</pre></div>
+
+  <h2>LEAD & LAG — Look Ahead / Behind</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">LEAD / LAG</span></div>
+  <pre><span class="cm">-- Compare each salary to the next and previous salary</span>
+<span class="kw">SELECT</span>   c.FirstName, s.Salary,
+         <span class="fn">LAG</span>(s.Salary)  <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> s.Salary) <span class="kw">AS</span> prev_salary,
+         <span class="fn">LEAD</span>(s.Salary) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> s.Salary) <span class="kw">AS</span> next_salary,
+         s.Salary - <span class="fn">LAG</span>(s.Salary) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> s.Salary) <span class="kw">AS</span> salary_jump
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> s.Salary;</pre></div>
+
+  <h2>Running Total with SUM OVER</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Running Total</span></div>
+  <pre><span class="cm">-- Running total of salaries (cumulative, ordered by salary)</span>
+<span class="kw">SELECT</span>   c.FirstName, s.Salary,
+         <span class="kw">SUM</span>(s.Salary) <span class="kw">OVER</span> (
+             <span class="kw">ORDER BY</span> s.Salary
+             <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+         ) <span class="kw">AS</span> running_total
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">ORDER BY</span> s.Salary;</pre></div>
+
+  <h2>Get Top-N Per Group (Classic Interview Pattern)</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Top-1 per city</span></div>
+  <pre><span class="cm">-- Highest paid customer in each city</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> (
+    <span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary,
+             <span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> c.City <span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>) <span class="kw">AS</span> rnk
+    <span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+    <span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+) ranked
+<span class="kw">WHERE</span> rnk = <span class="num">1</span>;</pre></div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 6 — ETL & STATISTICS ══════════ -->
+<div class="page" id="page-6">
+<div class="pg">
+  <h1>🔄 ETL & Statistical Analysis</h1>
+  <p class="sub">ETL (Extract, Transform, Load) is the process of moving and preparing data for analysis. SQL handles all three steps.</p>
+
+  <h2>ETL Overview</h2>
+  <div class="g3">
+    <div class="card blue"><span class="tag bl">Extract</span><h3>Pull raw data</h3><p style="font-size:13px;">Read from CSV files, APIs, other databases using LOAD DATA or SELECT.</p></div>
+    <div class="card orange"><span class="tag or">Transform</span><h3>Clean & reshape</h3><p style="font-size:13px;">Remove duplicates, fix types, CASE WHEN for normalization, JOIN to combine sources.</p></div>
+    <div class="card green"><span class="tag gn">Load</span><h3>Write to target</h3><p style="font-size:13px;">INSERT INTO a new table or data warehouse using INSERT...SELECT.</p></div>
+  </div>
+
+  <h2>Extract — LOAD DATA INFILE</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">LOAD DATA INFILE</span></div>
+  <pre><span class="cm">-- Load from a CSV file into a table</span>
+<span class="kw">LOAD DATA INFILE</span> <span class="str">'/path/to/customers.csv'</span>
+<span class="kw">INTO TABLE</span> <span class="tbl">customer_info</span>
+<span class="kw">FIELDS TERMINATED BY</span> <span class="str">','</span>
+<span class="kw">ENCLOSED BY</span> <span class="str">'"'</span>
+<span class="kw">LINES TERMINATED BY</span> <span class="str">'\n'</span>
+<span class="kw">IGNORE</span> <span class="num">1</span> <span class="kw">ROWS</span>   <span class="cm">-- skip the header row</span>
+(CustomerId, FirstName, LastName, Age, City);
+
+<span class="cm">-- Enable file loading if not already on</span>
+<span class="kw">SET</span> <span class="col">GLOBAL</span> local_infile = <span class="num">1</span>;</pre></div>
+
+  <h2>Transform — Clean & Normalize</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Transform Examples</span></div>
+  <pre><span class="cm">-- Normalize salary into tiers</span>
+<span class="kw">SELECT</span> c.FirstName, s.Salary,
+       <span class="kw">CASE</span>
+           <span class="kw">WHEN</span> s.Salary / <span class="num">5</span>  <= <span class="num">5</span>  <span class="kw">THEN</span> s.Salary / <span class="num">5.0</span>   <span class="cm">-- normalize 0-5 scale</span>
+           <span class="kw">ELSE</span>                       s.Salary / <span class="num">10.0</span>  <span class="cm">-- normalize 0-10 scale</span>
+       <span class="kw">END</span> <span class="kw">AS</span> normalized_salary
+<span class="kw">FROM</span>   <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>   <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;
+
+<span class="cm">-- Standardize city names (trim whitespace, uppercase)</span>
+<span class="kw">UPDATE</span> <span class="tbl">customer_info</span>
+<span class="kw">SET</span>    City = <span class="fn">TRIM</span>(<span class="fn">UPPER</span>(City));
+
+<span class="cm">-- Fill NULL ages with the average age</span>
+<span class="kw">UPDATE</span> <span class="tbl">customer_info</span>
+<span class="kw">SET</span>    Age = (<span class="kw">SELECT</span> <span class="fn">ROUND</span>(<span class="kw">AVG</span>(Age)) <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> Age <span class="kw">IS NOT NULL</span>)
+<span class="kw">WHERE</span>  Age <span class="kw">IS NULL</span>;</pre></div>
+
+  <h2>Load — INSERT ... SELECT</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Load Step</span></div>
+  <pre><span class="cm">-- Create and populate a summary table (the Load step)</span>
+<span class="kw">CREATE TABLE</span> <span class="tbl">city_salary_summary</span> (
+    City          <span class="op">VARCHAR</span>(<span class="num">50</span>),
+    avg_salary    <span class="op">DECIMAL</span>(<span class="num">10</span>,<span class="num">2</span>),
+    total_salary  <span class="op">DECIMAL</span>(<span class="num">12</span>,<span class="num">2</span>),
+    customer_count <span class="op">INT</span>
+);
+
+<span class="kw">INSERT INTO</span> <span class="tbl">city_salary_summary</span>
+<span class="kw">SELECT</span>   c.City,
+         <span class="fn">ROUND</span>(<span class="kw">AVG</span>(s.Salary), <span class="num">2</span>),
+         <span class="kw">SUM</span>(s.Salary),
+         <span class="kw">COUNT</span>(*)
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.City;</pre></div>
+
+  <h2>Statistical Analysis</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Variance & Standard Deviation</span></div>
+  <pre><span class="cm">-- Built-in functions (MySQL supports these)</span>
+<span class="kw">SELECT</span>
+    <span class="fn">AVG</span>(Salary)      <span class="kw">AS</span> mean,
+    <span class="fn">VARIANCE</span>(Salary) <span class="kw">AS</span> variance,
+    <span class="fn">STDDEV</span>(Salary)   <span class="kw">AS</span> std_deviation,
+    <span class="fn">MAX</span>(Salary) - <span class="fn">MIN</span>(Salary) <span class="kw">AS</span> salary_range
+<span class="kw">FROM</span> <span class="tbl">salary</span>;
+
+<span class="cm">-- Manual variance calculation (for understanding)</span>
+<span class="kw">SELECT</span>
+    <span class="kw">SUM</span>((Salary - <span class="kw">AVG</span>(Salary) <span class="kw">OVER</span>()) * (Salary - <span class="kw">AVG</span>(Salary) <span class="kw">OVER</span>())) /
+    (<span class="kw">COUNT</span>(*) <span class="kw">OVER</span>() - <span class="num">1</span>) <span class="kw">AS</span> sample_variance
+<span class="kw">FROM</span> <span class="tbl">salary</span>
+<span class="kw">LIMIT</span> <span class="num">1</span>;</pre></div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 7 — STORED PROCEDURES ══════════ -->
+<div class="page" id="page-7">
+<div class="pg">
+  <h1>⚙️ Stored Procedures</h1>
+  <p class="sub">A stored procedure is a saved SQL routine — write it once, call it many times with different parameters.</p>
+
+  <h2>Why Stored Procedures?</h2>
+  <div class="g2">
+    <div class="gc gn"><h4 style="color:var(--green);">Benefits</h4>
+      <ul style="padding-left:14px;">
+        <li style="font-size:13px;color:var(--muted);">Reusable — call instead of rewriting</li>
+        <li style="font-size:13px;color:var(--muted);">Precompiled — faster execution</li>
+        <li style="font-size:13px;color:var(--muted);">Secure — hide table structure</li>
+        <li style="font-size:13px;color:var(--muted);">Maintainable — change logic in one place</li>
+      </ul>
+    </div>
+    <div class="gc or"><h4 style="color:var(--orange);">Syntax Pattern</h4>
+      <ul style="padding-left:14px;">
+        <li style="font-size:13px;color:var(--muted);">DELIMITER changes statement end marker</li>
+        <li style="font-size:13px;color:var(--muted);">IN = input, OUT = output parameter</li>
+        <li style="font-size:13px;color:var(--muted);">BEGIN...END wraps the logic</li>
+        <li style="font-size:13px;color:var(--muted);">CALL runs the procedure</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Basic Procedure</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Simple Stored Procedure</span></div>
+  <pre><span class="cm">-- Create procedure to get customer info by ID</span>
+<span class="kw">DELIMITER</span> //
+<span class="kw">CREATE PROCEDURE</span> <span class="fn">GetCustInfo</span> (<span class="kw">IN</span> Customer_Id <span class="op">INT</span>)
+<span class="kw">BEGIN</span>
+    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+    <span class="kw">WHERE</span> CustomerId = Customer_Id;
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;
+
+<span class="cm">-- Call it with different IDs</span>
+<span class="kw">CALL</span> <span class="fn">GetCustInfo</span>(<span class="num">7</span>);
+<span class="kw">CALL</span> <span class="fn">GetCustInfo</span>(<span class="num">12</span>);</pre></div>
+
+  <h2>Procedure with Multiple Parameters</h2>
+  <div class="codeblock"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Multi-parameter Procedure</span></div>
+  <pre><span class="cm">-- Get customers by city with min salary filter</span>
+<span class="kw">DELIMITER</span> //
+<span class="kw">CREATE PROCEDURE</span> <span class="fn">GetCustomersByCity</span> (
+    <span class="kw">IN</span>  p_city       <span class="op">VARCHAR</span>(<span class="num">50</span>),
+    <span class="kw">IN</span>  p_min_salary <span class="op">DECIMAL</span>(<span class="num">10</span>,<span class="num">2</span>)
+)
+<span class="kw">BEGIN</span>
+    <span class="kw">SELECT</span>   c.FirstName, c.LastName, c.City, s.Salary
+    <span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+    <span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+    <span class="kw">WHERE</span>    c.City = p_city
+    <span class="kw">AND</span>      s.Salary >= p_min_salary
+    <span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>;
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;
+
+<span class="kw">CALL</span> <span class="fn">GetCustomersByCity</span>(<span class="str">'New York'</span>, <span class="num">70000</span>);
+
+<span class="cm">-- Procedure with OUT parameter</span>
+<span class="kw">DELIMITER</span> //
+<span class="kw">CREATE PROCEDURE</span> <span class="fn">GetAvgSalary</span> (<span class="kw">OUT</span> avg_result <span class="op">DECIMAL</span>(<span class="num">10</span>,<span class="num">2</span>))
+<span class="kw">BEGIN</span>
+    <span class="kw">SELECT</span> <span class="kw">AVG</span>(Salary) <span class="kw">INTO</span> avg_result <span class="kw">FROM</span> <span class="tbl">salary</span>;
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;
+
+<span class="kw">CALL</span> <span class="fn">GetAvgSalary</span>(@result);
+<span class="kw">SELECT</span> @result <span class="kw">AS</span> average_salary;</pre></div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 8 — WORKSHOP ══════════ -->
+<div class="page" id="page-8">
+<div class="pg">
+  <h1>🛠️ Workshop — 16 Hands-On Questions</h1>
+  <p class="sub">All questions from the Day 2 slide deck. Work through them using customer_info and salary tables.</p>
+
+  <h2>Level 1 — Basic Queries</h2>
+  <div class="workshop">
+    <div class="wt">🟢 Questions 1–5</div>
+    <ol class="steps">
+      <li>Find the average salary of customers grouped by their <strong>age</strong>.</li>
+      <li>Retrieve the <strong>first 5 customers</strong> from customer_info, ordered by last name ascending.</li>
+      <li>List all customers ordered by <strong>last name ascending</strong>.</li>
+      <li>Find the <strong>number of customers in each city</strong>, but only show cities with more than 1 customer.</li>
+      <li>Retrieve a list of customers along with their <strong>salaries</strong> (JOIN query).</li>
+    </ol>
+    <div class="codeblock" style="margin-top:14px;"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Answers 1–5</span></div>
+    <pre><span class="cm">-- Q1: Average salary grouped by age</span>
+<span class="kw">SELECT</span>   c.Age, <span class="fn">ROUND</span>(<span class="kw">AVG</span>(s.Salary), <span class="num">2</span>) <span class="kw">AS</span> avg_salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.Age <span class="kw">ORDER BY</span> c.Age;
+
+<span class="cm">-- Q2: First 5 customers by last name</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">ORDER BY</span> LastName <span class="kw">ASC</span> <span class="kw">LIMIT</span> <span class="num">5</span>;
+
+<span class="cm">-- Q3: All customers ordered by last name</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">ORDER BY</span> LastName <span class="kw">ASC</span>;
+
+<span class="cm">-- Q4: Cities with more than 1 customer</span>
+<span class="kw">SELECT</span>   City, <span class="kw">COUNT</span>(*) <span class="kw">AS</span> count
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span>
+<span class="kw">GROUP BY</span> City <span class="kw">HAVING</span> <span class="kw">COUNT</span>(*) > <span class="num">1</span>;
+
+<span class="cm">-- Q5: Customers with salaries</span>
+<span class="kw">SELECT</span>   c.FirstName, c.LastName, c.City, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c
+<span class="kw">JOIN</span>     <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId;</pre></div>
+  </div>
+
+  <h2>Level 2 — Filtering & Subqueries</h2>
+  <div class="workshop">
+    <div class="wt">🟡 Questions 6–11</div>
+    <ol class="steps" start="6">
+      <li>Find customers who earn <strong>more than the average salary</strong> of all customers.</li>
+      <li>Find the <strong>total salary by city</strong>, only cities where total > $100,000.</li>
+      <li>Find all customers in either <strong>"New York" or "Miami"</strong> who are older than 30.</li>
+      <li>Find customers whose <strong>last name starts with 'D'</strong>.</li>
+      <li>Find customers whose city is <strong>"Chicago", "Houston", or "Seattle"</strong>.</li>
+      <li>Find customers aged <strong>between 25 and 35 inclusive</strong>.</li>
+    </ol>
+    <div class="codeblock" style="margin-top:14px;"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Answers 6–11</span></div>
+    <pre><span class="cm">-- Q6: Customers earning above average</span>
+<span class="kw">SELECT</span>   c.FirstName, c.City, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    s.Salary > (<span class="kw">SELECT</span> <span class="kw">AVG</span>(Salary) <span class="kw">FROM</span> <span class="tbl">salary</span>)
+<span class="kw">ORDER BY</span> s.Salary <span class="kw">DESC</span>;
+
+<span class="cm">-- Q7: Total salary by city > 100k</span>
+<span class="kw">SELECT</span>   c.City, <span class="kw">SUM</span>(s.Salary) <span class="kw">AS</span> total_salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">GROUP BY</span> c.City <span class="kw">HAVING</span> <span class="kw">SUM</span>(s.Salary) > <span class="num">100000</span>;
+
+<span class="cm">-- Q8: NY or Miami AND age > 30</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> City <span class="kw">IN</span> (<span class="str">'New York'</span>, <span class="str">'Miami'</span>) <span class="kw">AND</span> Age > <span class="num">30</span>;
+
+<span class="cm">-- Q9: Last name starts with D</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> LastName <span class="kw">LIKE</span> <span class="str">'D%'</span>;
+
+<span class="cm">-- Q10: City IN list</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span> City <span class="kw">IN</span> (<span class="str">'Chicago'</span>, <span class="str">'Houston'</span>, <span class="str">'Seattle'</span>);
+
+<span class="cm">-- Q11: Age between 25 and 35</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> Age <span class="kw">BETWEEN</span> <span class="num">25</span> <span class="kw">AND</span> <span class="num">35</span>;</pre></div>
+  </div>
+
+  <h2>Level 3 — Challenge</h2>
+  <div class="workshop">
+    <div class="wt">🔴 Questions 12–16</div>
+    <ol class="steps" start="12">
+      <li>Find customers whose <strong>first name contains the letter 'a'</strong>.</li>
+      <li>Find customers who are <strong>younger than 30 OR salary > $70,000</strong>.</li>
+      <li>Find customers who do <strong>NOT live in "Los Angeles"</strong>.</li>
+      <li>Customers from <strong>"Miami" older than 30</strong> OR <strong>"Chicago" younger than 28</strong>.</li>
+      <li>Retrieve the <strong>next 3 customers</strong> (rows 6–8) ordered by age descending.</li>
+    </ol>
+    <div class="codeblock" style="margin-top:14px;"><div class="cb-top"><div class="cb-dots"><div class="cb-dot" style="background:#ff5f56"></div><div class="cb-dot" style="background:#ffbd2e"></div><div class="cb-dot" style="background:#27c93f"></div></div><span class="cb-lbl">Answers 12–16</span></div>
+    <pre><span class="cm">-- Q12: First name contains 'a'</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> FirstName <span class="kw">LIKE</span> <span class="str">'%a%'</span>;
+
+<span class="cm">-- Q13: Younger than 30 OR salary > 70k</span>
+<span class="kw">SELECT</span>   c.FirstName, c.Age, s.Salary
+<span class="kw">FROM</span>     <span class="tbl">customer_info</span> c <span class="kw">JOIN</span> <span class="tbl">salary</span> s <span class="kw">ON</span> c.CustomerId = s.CustomerId
+<span class="kw">WHERE</span>    c.Age < <span class="num">30</span> <span class="kw">OR</span> s.Salary > <span class="num">70000</span>;
+
+<span class="cm">-- Q14: NOT in Los Angeles</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span> <span class="kw">WHERE</span> City <span class="kw">NOT IN</span> (<span class="str">'Los Angeles'</span>);
+
+<span class="cm">-- Q15: Complex AND/OR</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">WHERE</span>  (City = <span class="str">'Miami'</span>   <span class="kw">AND</span> Age > <span class="num">30</span>)
+    <span class="kw">OR</span>  (City = <span class="str">'Chicago'</span> <span class="kw">AND</span> Age < <span class="num">28</span>);
+
+<span class="cm">-- Q16: Next 3 customers (rows 6-8) by age DESC</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tbl">customer_info</span>
+<span class="kw">ORDER BY</span> Age <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>    <span class="num">3</span> <span class="kw">OFFSET</span> <span class="num">5</span>;</pre></div>
+  </div>
+</div>
+</div>
+
+</div><!-- pages -->
+
+<div class="prog" id="prog"></div>
+<div class="clock" id="clock">00:00</div>
+
+<script>
+const labels=["📋 Agenda","📊 Sorting & Filtering","📈 GROUP BY & Math","🔗 JOINs","🔄 Subqueries","🪟 Window Functions","🔄 ETL & Stats","⚙️ Procedures","🛠️ Workshop"];
+const tabs=document.getElementById('navTabs');
+const pages=document.querySelectorAll('.page');
+let cur=0;
+labels.forEach((l,i)=>{const b=document.createElement('div');b.className='nav-btn'+(i===0?' active':'');b.textContent=l;b.onclick=()=>go(i);tabs.appendChild(b);});
+function go(i){pages[cur].classList.remove('active');tabs.querySelectorAll('.nav-btn')[cur].classList.remove('active');cur=i;pages[cur].classList.add('active');tabs.querySelectorAll('.nav-btn')[cur].classList.add('active');pages[cur].scrollTop=0;tabs.querySelectorAll('.nav-btn')[cur].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});up();}
+function up(){const p=pages[cur];const pct=p.scrollHeight<=p.clientHeight?100:(p.scrollTop/(p.scrollHeight-p.clientHeight))*100;document.getElementById('prog').style.width=pct+'%';}
+pages.forEach(p=>p.addEventListener('scroll',up));
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'&&cur<labels.length-1)go(cur+1);if(e.key==='ArrowLeft'&&cur>0)go(cur-1);});
+pages[0].classList.add('active');up();
+let s=0;setInterval(()=>{s++;const m=String(Math.floor(s/60)).padStart(2,'0'),ss=String(s%60).padStart(2,'0');document.getElementById('clock').textContent=m+':'+ss;},1000);
+</script>
+</body>
+</html>
